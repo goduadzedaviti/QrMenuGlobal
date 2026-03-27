@@ -1,0 +1,12 @@
+**/.git
+**/.vs
+**/bin
+**/obj
+**/out
+**/dist
+**/node_modules
+.vscode
+Dockerfile
+render.yaml
+*.md
+cloudflared.exe
