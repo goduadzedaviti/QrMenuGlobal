@@ -1,12 +1,12 @@
 services:
   # Backend API
   - type: web
-    name: qrmenu-api
+    name: qrmenu-backend-api
     runtime: docker
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: qrmenu-db
+          name: qrmenu-backend-db
           property: connectionString
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
@@ -17,7 +17,7 @@ services:
       - key: JwtSettings__Audience
         value: MenuManagementFrontend
       - key: Cors__AllowedOrigins__0
-        value: https://qrmenu-frontend-6m70.onrender.com
+        value: https://qrmenu-management-frontend.onrender.com
     disk:
       name: uploads-disk
       mountPath: /app/wwwroot/uploads
@@ -25,7 +25,7 @@ services:
 
   # Frontend (Admin + Public)
   - type: web
-    name: qrmenu-frontend
+    name: qrmenu-management-frontend
     env: static
     buildCommand: "cd frontend && npm ci && npm run build"
     staticPublishPath: "frontend/dist/frontend/browser"
@@ -35,5 +35,5 @@ services:
         destination: /index.html
 
 databases:
-  - name: qrmenu-db
+  - name: qrmenu-backend-db
     plan: free
