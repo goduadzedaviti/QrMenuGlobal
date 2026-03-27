@@ -1,0 +1,144 @@
+.details-shell {
+  padding: 28px;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 20px;
+  text-decoration: none;
+}
+
+.back-button {
+  background: var(--surface-alt);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  padding: 12px 24px;
+  border-radius: 16px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-button:hover {
+  background: var(--surface-soft);
+  transform: translateX(-4px);
+}
+
+.details-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.details-header, .item-row, .actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.details-header {
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.status, .notes-box {
+  background: var(--surface-alt);
+  border-radius: 20px;
+  padding: 14px 18px;
+}
+
+.meta, .notes-box p, .item-row p {
+  color: var(--muted);
+}
+
+.items-list {
+  display: grid;
+  gap: 14px;
+}
+
+.item-row {
+  padding: 18px 20px;
+  border-radius: 20px;
+  background: var(--surface-soft);
+}
+
+.actions {
+  margin-top: 28px;
+}
+
+.actions button {
+  flex: 1;
+  min-height: 88px;
+  border-radius: 22px;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.reject {
+  background: rgba(255, 91, 110, 0.14);
+  color: #ffd5db;
+}
+
+.accept {
+  background: rgba(255, 140, 66, 0.18);
+  color: #ffe2d0;
+}
+
+.ready {
+  background: rgba(83, 209, 141, 0.16);
+  color: #d8fbe6;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 600px) {
+  .details-shell {
+    padding: 16px;
+  }
+
+  .back-button {
+    padding: 10px 18px;
+    font-size: 1.1rem;
+    border-radius: 12px;
+  }
+
+  .details-card {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .details-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  h2 {
+    font-size: 1.6rem !important;
+  }
+
+  .item-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 14px;
+  }
+
+  .item-row div:last-child {
+    align-self: flex-end;
+    font-weight: bold;
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .actions button {
+    min-height: 60px;
+    font-size: 1.1rem;
+    border-radius: 16px;
+  }
+}

@@ -1,0 +1,205 @@
+.queue-shell {
+  padding: 28px;
+}
+
+.queue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  margin: 0 0 8px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 2.4rem;
+}
+
+.status-pill {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 16px 22px;
+  font-size: 1.15rem;
+}
+
+.status-pill span {
+  font-size: 2rem;
+  margin-right: 10px;
+}
+
+.queue-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.order-card, .empty-state {
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  padding: 24px;
+  box-shadow: var(--shadow);
+  text-decoration: none;
+  color: inherit;
+}
+
+.order-card.unopened {
+  background: rgba(40, 167, 69, 0.25);
+  border: 1px solid #28a745;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+}
+
+.order-card.unopened .order-number,
+.order-card.unopened h2,
+.order-card.unopened p,
+.order-card.unopened .items-total,
+.order-card.unopened time {
+  color: #a5e8b6; /* Lighter green/white tint for contrast against dark theme */
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.order-number {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.status {
+  background: rgba(255, 140, 66, 0.15);
+  color: #ffd0b4;
+  padding: 8px 14px;
+  border-radius: 999px;
+}
+
+.status.accepted {
+  background: rgba(83, 209, 141, 0.15);
+  color: #b9f3d1;
+}
+
+h2 {
+  margin: 0 0 6px;
+  font-size: 2rem;
+}
+
+.items-total, time, .empty-state p, .order-card p {
+  color: var(--muted);
+}
+
+.tabs button.active-tab {
+  background: #f97316 !important;
+  color: white !important;
+}
+
+.new-order-alert {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background-color: #28a745;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  animation: flash 1s infinite alternate;
+  text-align: center;
+}
+
+.new-order-alert h1 {
+  font-size: 5rem;
+  margin: 0;
+  margin-bottom: 2rem;
+}
+
+.new-order-alert p {
+  font-size: 2rem;
+  opacity: 0.8;
+  margin: 0;
+}
+
+@keyframes flash {
+  from { background-color: #28a745; }
+  to { background-color: #218838; }
+}
+
+.waiter-alert {
+  background-color: #dc2626 !important;
+  animation: flash-red 0.8s infinite alternate !important;
+}
+
+@keyframes flash-red {
+  from { background-color: #dc2626; }
+  to { background-color: #991b1b; }
+}
+
+.waiter-card {
+  background: #dc2626 !important;
+  border-color: #b91c1c !important;
+  color: white !important;
+}
+
+.waiter-card .order-number,
+.waiter-card h2,
+.waiter-card p,
+.waiter-card .items-total,
+.waiter-card time {
+  color: white !important;
+}
+
+.waiter-card:hover {
+  background: #ef4444 !important; /* Slightly lighter on hover */
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 600px) {
+  .queue-shell {
+    padding: 16px;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+  }
+
+  .queue-header {
+    margin-bottom: 20px;
+  }
+
+  .status-pill {
+    padding: 12px 18px;
+    font-size: 1rem;
+  }
+
+  .status-pill span {
+    font-size: 1.5rem;
+  }
+
+  .queue-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .new-order-alert h1 {
+    font-size: 3rem;
+  }
+
+  .new-order-alert p {
+    font-size: 1.5rem;
+  }
+
+  .tabs button {
+    flex: 1;
+    font-size: 1rem !important;
+    padding: 8px 12px !important;
+  }
+}

@@ -1,0 +1,93 @@
+@if (ordersStore.waiterCallAlert()) {
+<div class="new-order-alert waiter-alert" (click)="ordersStore.dismissAlert()">
+  <h1>მიმტანს უძახიან: {{ ordersStore.waiterCallAlert()?.tableLabel }}</h1>
+  <p>(დაკლიკეთ დასახურად)</p>
+</div>
+} @else if (ordersStore.newOrderAlert()) {
+<div class="new-order-alert" (click)="ordersStore.dismissAlert()">
+  <h1>ახალი შეკვეთა: #{{ ordersStore.newOrderAlert()?.orderNumber }}</h1>
+  <p>(დაკლიკეთ სიის გასახსნელად)</p>
+</div>
+}
+
+<main class="queue-shell">
+  <header class="queue-header" style="flex-direction: column; align-items: stretch; gap: 1rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <p class="eyebrow">Kitchen console</p>
+        <h1>Incoming QR orders</h1>
+      </div>
+      <div class="status-pill">
+        <span>{{ pendingCount() }}</span>
+        orders live
+      </div>
+    </div>
+
+    <div class="tabs" style="display: flex; gap: 1rem;">
+      <button [class.active-tab]="activeTab() === 'active'" (click)="activeTab.set('active')"
+        style="padding: 10px 20px; font-size: 1.2rem; border-radius: 999px; border: none; cursor: pointer; background: var(--surface-alt); color: inherit;">Active
+        Orders</button>
+      <button [class.active-tab]="activeTab() === 'completed'" (click)="activeTab.set('completed')"
+        style="padding: 10px 20px; font-size: 1.2rem; border-radius: 999px; border: none; cursor: pointer; background: var(--surface-alt); color: inherit;">Completed
+        ({{ completedOrders().length }})</button>
+    </div>
+  </header>
+
+  <section class="queue-grid">
+    @if (activeTab() === 'active') {
+    @for (call of ordersStore.waiterCalls(); track call.tableLabel) {
+    <article class="order-card waiter-card" (click)="ordersStore.dismissWaiterCall(call.tableLabel)"
+      style="cursor: pointer;">
+      <div class="card-top">
+        <span class="order-number">მიმტანის გამოძახება</span>
+      </div>
+      <h2>{{ call.tableLabel }}</h2>
+      <p>მიმტანს უძახიან</p>
+      <div class="items-total">Tap to dismiss</div>
+      <time>{{ call.calledAtUtc | date: 'shortTime' }}</time>
+    </article>
+    }
+
+    @for (order of orders(); track order.id) {
+    <a class="order-card" [class.unopened]="order.status === 'Created' && !ordersStore.viewedOrderIds().has(order.id)"
+      [routerLink]="['/orders', order.id]">
+      <div class="card-top">
+        <span class="order-number">#{{ order.orderNumber }}</span>
+        <span class="status" [class.accepted]="order.status === 'Accepted'">
+          {{ order.status }}
+        </span>
+      </div>
+      <h2>{{ order.tableLabel }}</h2>
+      <p>{{ order.customerName }}</p>
+      <div class="items-total">{{ order.items.length }} item lines</div>
+      <time>{{ order.createdAtUtc | date: 'shortTime' }}</time>
+    </a>
+    } @empty {
+    <article class="empty-state">
+      <h2>No active kitchen orders</h2>
+      <p>New orders will appear instantly here without polling.</p>
+    </article>
+    }
+    } @else {
+    @for (order of completedOrders(); track order.id) {
+    <a class="order-card" [routerLink]="['/orders', order.id]">
+      <div class="card-top">
+        <span class="order-number">#{{ order.orderNumber }}</span>
+        <span class="status accepted">
+          {{ order.status }}
+        </span>
+      </div>
+      <h2>{{ order.tableLabel }}</h2>
+      <p>{{ order.customerName }}</p>
+      <div class="items-total">{{ order.items.length }} item lines</div>
+      <time>{{ order.createdAtUtc | date: 'shortTime' }}</time>
+    </a>
+    } @empty {
+    <article class="empty-state">
+      <h2>No completed orders today</h2>
+      <p>Orders you mark as 'Done' will appear here.</p>
+    </article>
+    }
+    }
+  </section>
+</main>

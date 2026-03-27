@@ -1,0 +1,29 @@
+<div class="app-wrapper" [class.mobile-menu-open]="mobileMenuOpen">
+  <div class="sidebar-backdrop" *ngIf="showSidebar() && mobileMenuOpen" (click)="closeMobileMenu()"></div>
+
+  <aside class="sidebar" *ngIf="showSidebar()" [class.sidebar-open]="mobileMenuOpen">
+    <div class="logo">QR MENU</div>
+    <nav>
+      <a routerLink="/admin/dashboard" routerLinkActive="exact-active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()">{{ translate('SIDEBAR_DASHBOARD') }}</a>
+      <a routerLink="/admin/objects" routerLinkActive="active" (click)="closeMobileMenu()">{{ translate('SIDEBAR_MANAGE_VENUES') }}</a>
+      <a routerLink="/admin/language-management" routerLinkActive="active" (click)="closeMobileMenu()">{{ translate('SIDEBAR_LANGUAGE_MANAGEMENT') }}</a>
+      <a routerLink="/admin/qr-generator" routerLinkActive="active" (click)="closeMobileMenu()">{{ translate('SIDEBAR_QR_GENERATOR') }}</a>
+      <a routerLink="/admin/users" *ngIf="authService.isSystemAdmin()" routerLinkActive="active" (click)="closeMobileMenu()">{{ translate('SIDEBAR_USER_MANAGEMENT') }}</a>
+      <a routerLink="/admin/change-password" routerLinkActive="active" (click)="closeMobileMenu()">{{ translate('SIDEBAR_CHANGE_PASSWORD') }}</a>
+    </nav>
+    <div class="user-box">
+      <span>{{ translate('SIDEBAR_LOGGED_IN_AS') }} {{ authService.currentUserValue?.role }}</span>
+      <button class="btn btn-sm btn-outline-danger" (click)="logout()">{{ translate('BUTTON_LOGOUT') }}</button>
+    </div>
+  </aside>
+  
+  <main [class.content]="showSidebar()" [class.no-sidebar]="!showSidebar()">
+    <header class="mobile-admin-bar" *ngIf="showSidebar()">
+      <button type="button" class="mobile-admin-toggle" (click)="toggleMobileMenu()" aria-label="Toggle admin menu">
+        <i class="bi" [ngClass]="mobileMenuOpen ? 'bi-x-lg' : 'bi-list'"></i>
+      </button>
+      <div class="mobile-admin-brand">QR MENU</div>
+    </header>
+    <router-outlet></router-outlet>
+  </main>
+</div>

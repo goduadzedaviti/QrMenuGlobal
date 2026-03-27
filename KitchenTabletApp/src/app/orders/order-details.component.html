@@ -1,0 +1,44 @@
+@if (order(); as entry) {
+  <main class="details-shell">
+    <a routerLink="/" [queryParams]="order()?.status === 'Ready' ? { tab: 'completed' } : {}" class="back-link">
+      <button type="button" class="back-button"> Back </button>
+    </a>
+  <section class="details-card">
+    <header class="details-header">
+      <div>
+        <p class="eyebrow">Order #{{ entry.orderNumber }}</p>
+        <h1>{{ entry.tableLabel }}</h1>
+        <p class="meta">{{ entry.customerName }} • {{ entry.createdAtUtc | date: 'short' }}</p>
+      </div>
+      <span class="status">{{ entry.status }}</span>
+    </header>
+
+    <section class="items-list">
+      @for (item of entry.items; track item.id) {
+      <article class="item-row">
+        <div>
+          <h2>{{ item.quantity }} x {{ item.nameSnapshot }}</h2>
+          @if (item.notes) {
+          <p>{{ item.notes }}</p>
+          }
+        </div>
+      </article>
+      }
+    </section>
+
+    @if (entry.notes) {
+    <section class="notes-box">
+      <h3>Order notes</h3>
+      <p>{{ entry.notes }}</p>
+    </section>
+    }
+
+    @if (entry.status !== 'Ready') {
+      <footer class="actions">
+        <button class="ready" type="button" style="width: 100%; font-size: 2rem; padding: 1.5rem;"
+          (click)="ready()">Done</button>
+      </footer>
+    }
+  </section>
+</main>
+}

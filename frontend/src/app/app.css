@@ -1,0 +1,166 @@
+.app-wrapper {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+}
+ 
+.sidebar {
+  width: 280px;
+  background: #212529;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  position: fixed;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  z-index: 1030;
+}
+ 
+.content {
+  flex: 1;
+  margin-left: 280px;
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+ 
+.no-sidebar {
+  flex: 1;
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+ 
+.sidebar .logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #0d6efd;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+ 
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+ 
+.sidebar nav a {
+  color: #adb5bd;
+  text-decoration: none;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+ 
+.sidebar nav a:hover {
+  background: #343a40;
+  color: white;
+}
+ 
+.sidebar nav a.active {
+  background: #0d6efd;
+  color: white;
+}
+ 
+.sidebar nav a.exact-active {
+  background: #0d6efd;
+  color: white;
+}
+ 
+.user-box {
+  border-top: 1px solid #343a40;
+  padding-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+ 
+.user-box span {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+ 
+.user-box button {
+  width: 100%;
+}
+
+.sidebar-backdrop,
+.mobile-admin-bar {
+  display: none;
+}
+
+.mobile-admin-bar {
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.mobile-admin-toggle {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 12px;
+  background: #0d6efd;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 24px rgba(13, 110, 253, 0.22);
+}
+
+.mobile-admin-toggle i {
+  font-size: 1.1rem;
+}
+
+.mobile-admin-brand {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #212529;
+}
+
+@media (max-width: 991.98px) {
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.45);
+    z-index: 1025;
+  }
+
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.24s ease;
+    box-shadow: 24px 0 48px rgba(0, 0, 0, 0.24);
+    width: min(82vw, 320px);
+    max-width: 320px;
+  }
+
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+
+  .content {
+    margin-left: 0;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .mobile-admin-bar {
+    display: flex;
+  }
+
+  .content,
+  .no-sidebar {
+    min-height: 100vh;
+  }
+}

@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: qrmenu-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: qrmenusystem_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  postgres_kitchen:
+    image: postgres:16
+    container_name: qrmenu-postgres-kitchen
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: qrmenusystem_kitchen
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_kitchen_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+  postgres_kitchen_data:

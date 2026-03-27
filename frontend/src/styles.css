@@ -1,0 +1,106 @@
+/* You can add global styles to this file, and also import other style files */
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+@import '@angular/cdk/overlay-prebuilt.css';
+
+/* CDK Drag and Drop basic styles */
+.cdk-drag-preview {
+  box-sizing: border-box;
+  border-radius: 4px;
+  box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+              0 8px 10px 1px rgba(0, 0, 0, 0.14),
+              0 3px 14px 2px rgba(0, 0, 0, 0.12);
+}
+
+.cdk-drag-placeholder {
+  opacity: 0;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.cdk-drop-list-dragging .cdk-drag {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* Breadcrumb Styling */
+.breadcrumb {
+  background: transparent;
+  padding: 0;
+  margin-bottom: 0.5rem;
+}
+.breadcrumb-item + .breadcrumb-item::before {
+  content: "›";
+  color: #adb5bd;
+  font-size: 1.2rem;
+  line-height: 1;
+  vertical-align: middle;
+}
+.breadcrumb-item a {
+  transition: color 0.2s;
+}
+.breadcrumb-item a:hover {
+  color: #0d6efd !important;
+}
+
+.admin-page {
+  padding-bottom: 2.5rem;
+}
+
+.admin-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-toolbar__left,
+.admin-toolbar__right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.admin-toolbar__title {
+  margin: 0;
+  min-width: 0;
+}
+
+@media (max-width: 767.98px) {
+  .admin-page {
+    padding-bottom: 5rem;
+  }
+
+  .admin-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-toolbar__left,
+  .admin-toolbar__right {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .admin-toolbar__right > .btn,
+  .admin-toolbar__left > .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .modal-dialog {
+    margin: 0.75rem;
+  }
+
+  .modal-content {
+    border-radius: 1rem !important;
+  }
+
+  .btn-group.w-100 > .btn {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    font-size: 0.875rem;
+  }
+}

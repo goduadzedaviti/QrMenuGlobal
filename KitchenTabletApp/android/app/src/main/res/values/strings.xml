@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Kitchen Alert</string>
+    <string name="title_activity_main">Kitchen Alert</string>
+    <string name="package_name">com.qrmenu.kitchenalert</string>
+    <string name="custom_url_scheme">com.qrmenu.kitchenalert</string>
+</resources>

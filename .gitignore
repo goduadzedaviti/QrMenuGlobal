@@ -1,0 +1,35 @@
+## [Visual Studio]
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## [Build Artifacts]
+bin/
+obj/
+[Bb]uild/
+[Rr]elease/
+[Dd]ebug/
+TestResults/
+
+## [Logs]
+*.log
+backend_logs.txt
+build_diag.txt
+build_errors*.txt
+restore_diag.txt
+restore_err*.txt
+
+## [Frontend - Node & Angular]
+node_modules/
+frontend/.angular/
+frontend/dist/
+menu-frontend/node_modules/
+menu-frontend/dist/
+
+## [OS / Misc]
+.DS_Store
+Thumbs.db
+artifacts/
+MenuManagement.API/wwwroot/uploads/
