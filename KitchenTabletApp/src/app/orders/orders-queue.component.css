@@ -101,10 +101,18 @@ h2 {
   color: white !important;
 }
 
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
 .new-order-alert {
   position: fixed;
-  inset: 0;
-  z-index: 9999;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 99999;
   background-color: #28a745;
   color: white;
   display: flex;

@@ -185,6 +185,15 @@ interface CartItem {
           <p class="feedback feedback--success" *ngIf="orderSuccess">{{ orderSuccess }}</p>
         </div>
       </div>
+
+      <!-- Google Review at the bottom -->
+      <div class="footer-reviews" *ngIf="object.googleReviewUrl">
+        <div class="section-tag mb-2">{{ t('rateUs') }}</div>
+        <a [href]="object.googleReviewUrl" target="_blank" class="review-button">
+          <img src="https://www.google.com/images/branding/googleg/1x/googleg_standard_color_128dp.png" alt="Google">
+          <span>{{ t('leaveReview') }}</span>
+        </a>
+      </div>
     </div>
   `,
   styles: [`
@@ -253,6 +262,42 @@ interface CartItem {
 
     .hero__description {
       max-width: 36ch;
+    }
+
+    .footer-reviews {
+      margin-top: 3rem;
+      padding: 2rem 1rem;
+      text-align: center;
+      background: #fdf6ee;
+      border-top: 1px solid #fee1cc;
+    }
+
+    .review-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.8rem 1.6rem;
+      background: white;
+      color: #1a1a1a;
+      text-decoration: none;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 1rem;
+      box-shadow: 0 10px 30px rgba(249, 115, 22, 0.15);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid #fee1cc;
+    }
+
+    .review-button:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 15px 35px rgba(249, 115, 22, 0.25);
+      background: #ffffff;
+      border-color: #f97316;
+    }
+
+    .review-button img {
+      width: 20px;
+      height: 20px;
     }
 
     .hero__languages {
@@ -635,8 +680,8 @@ interface CartItem {
       margin-top: 0.5rem;
       margin-bottom: 1.5rem;
       position: relative;
-      z-index: 100;
-      pointer-events: none;
+      z-index: 1000;
+      /* removed pointer-events: none to ensure interaction */
     }
 
     .waiter-button {
@@ -704,7 +749,9 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       submitting: 'იგზავნება...',
       orderPlaced: 'შეკვეთა გაიგზავნა სამზარეულოში',
       back: 'უკან',
-      callWaiter: 'მიმტანის გამოძახება'
+      callWaiter: 'მიმტანის გამოძახება',
+      rateUs: 'მოგვეცით შეფასება',
+      leaveReview: 'დატოვეთ შეფასება'
     },
     en: {
       chooseLanguage: 'Choose your language',
@@ -729,7 +776,9 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       submitting: 'Submitting...',
       orderPlaced: 'Order sent to the kitchen',
       back: 'Back',
-      callWaiter: 'Call Waiter'
+      callWaiter: 'Call Waiter',
+      rateUs: 'Rate Us',
+      leaveReview: 'Leave a Review'
     },
     ru: {
       chooseLanguage: 'Выберите язык',
@@ -754,7 +803,9 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       submitting: 'Отправка...',
       orderPlaced: 'Заказ отправлен на кухню',
       back: 'Назад',
-      callWaiter: 'Позвать официанта'
+      callWaiter: 'Позвать официанта',
+      rateUs: 'Оцените нас',
+      leaveReview: 'Оставить отзыв'
     },
   };
 
@@ -867,8 +918,8 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (!this.orderForm.tableLabel.trim()) {
       const label = prompt(this.t('tableLabel'));
-      if (!label) return;
-      this.orderForm.tableLabel = label;
+      if (!label || !label.trim()) return;
+      this.orderForm.tableLabel = label.trim();
     }
 
     this.isCallingWaiter = true;

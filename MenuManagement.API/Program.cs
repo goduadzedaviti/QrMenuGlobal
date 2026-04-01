@@ -16,6 +16,14 @@ using MenuManagement.API.Services;
 using MenuManagement.Application.Common.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Ensure wwwroot exists for static files
+var wwwrootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
+var uploadsPath = Path.Combine(wwwrootPath, "uploads");
+if (!Directory.Exists(wwwrootPath)) Directory.CreateDirectory(wwwrootPath);
+if (!Directory.Exists(uploadsPath)) Directory.CreateDirectory(uploadsPath);
+builder.Environment.WebRootPath = wwwrootPath;
+
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
@@ -127,25 +135,18 @@ bool IsAllowedOrigin(string? origin)
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AppCorsPolicy", policy =>
+    options.AddDefaultPolicy(policy =>
     {
-        if (builder.Environment.IsDevelopment())
-        {
-            policy.AllowAnyOrigin()
-                  .AllowAnyMethod()
-                  .AllowAnyHeader();
-        }
-        else
-        {
-            policy.SetIsOriginAllowed(origin => IsAllowedOrigin(origin))
-                  .AllowAnyMethod()
-                  .AllowAnyHeader()
-                  .AllowCredentials();
-        }
+        policy.SetIsOriginAllowed(_ => true)
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 
 var app = builder.Build();
+
+app.UseCors();
 
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
@@ -162,21 +163,12 @@ app.UseSwaggerUI(c => {
 
 app.UseMiddleware<ExceptionMiddleware>();
 
-app.UseStaticFiles(new StaticFileOptions
-{
-    OnPrepareResponse = ctx =>
-    {
-        ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "*");
-        ctx.Context.Response.Headers.Append("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    }
-});
+app.UseStaticFiles();
 
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
-
-app.UseCors("AppCorsPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();

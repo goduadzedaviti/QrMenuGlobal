@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -133,6 +133,10 @@ import { timeout } from 'rxjs';
                   <label class="form-label fw-medium">{{ translate('FIELD_DESCRIPTION_KA') }}</label>
                   <textarea [(ngModel)]="editingObject.description" class="form-control rounded-3" [placeholder]="translate('VENUE_DESCRIPTION_LABEL')" rows="3"></textarea>
                 </div>
+                <div class="mb-3">
+                  <label class="form-label fw-medium text-primary"><i class="bi bi-google me-2"></i>{{ translate('VENUE_GOOGLE_REVIEW_LABEL') }}</label>
+                  <input [(ngModel)]="editingObject.googleReviewUrl" class="form-control rounded-3 border-primary" placeholder="https://g.page/r/...">
+                </div>
               </div>
 
               <!-- English Fields -->
@@ -206,7 +210,7 @@ export class ObjectManagementComponent implements OnInit {
   isUploading = false;
   activeLang: 'ka' | 'en' | 'ru' = 'ka';
 
-  constructor(private api: ApiService, private translationService: TranslationService, private imageService: ImageService) {}
+  constructor(private api: ApiService, private translationService: TranslationService, private imageService: ImageService, private ngZone: NgZone) {}
 
   ngOnInit() {
     this.loadObjects();
@@ -239,18 +243,24 @@ export class ObjectManagementComponent implements OnInit {
           timeout(30000)
         ).subscribe({
           next: (res: any) => {
-            this.editingObject.imageUrl = res.imageUrl;
-            this.isUploading = false;
+            this.ngZone.run(() => {
+              this.editingObject.imageUrl = res.imageUrl;
+              this.isUploading = false;
+            });
           },
           error: (err: any) => {
             console.error('Venue photo upload error', err);
-            this.isUploading = false;
+            this.ngZone.run(() => {
+              this.isUploading = false;
+            });
             alert('Upload failed: ' + (err.message || 'Server error'));
           }
         });
       } catch (err: any) {
         console.error('Venue photo processing failed', err);
-        this.isUploading = false;
+        this.ngZone.run(() => {
+          this.isUploading = false;
+        });
         alert('Image processing failed: ' + err.message);
       }
     }

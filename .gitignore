@@ -1,9 +1,12 @@
-## [Visual Studio]
+## [Visual Studio / IDE]
 .vs/
+.vscode/
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
+*.swp
+*.orig
 
 ## [Build Artifacts]
 bin/
@@ -12,6 +15,7 @@ obj/
 [Rr]elease/
 [Dd]ebug/
 TestResults/
+dist/
 
 ## [Logs]
 *.log
@@ -23,9 +27,14 @@ restore_err*.txt
 
 ## [Frontend - Node & Angular]
 node_modules/
-frontend/.angular/
+.angular/
+.npm/
+package-lock.json.tmp
+yarn-error.log
+
+# Specific app folders dist/cache
 frontend/dist/
-menu-frontend/node_modules/
+KitchenTabletApp/dist/
 menu-frontend/dist/
 
 ## [OS / Misc]
@@ -33,3 +42,9 @@ menu-frontend/dist/
 Thumbs.db
 artifacts/
 MenuManagement.API/wwwroot/uploads/
+
+## [Environment / Secrets]
+.env
+.env.*
+! .env.example
+appsettings.Development.json

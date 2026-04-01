@@ -26,14 +26,8 @@ namespace MenuManagement.API.Controllers.Admin
             Console.WriteLine($"[Upload] Start: {(file == null ? "NULL" : file.FileName)} size={file?.Length}");
             if (file == null || file.Length == 0) return BadRequest("No file uploaded.");
 
-            var webRoot = _environment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
-            Console.WriteLine($"[Upload] WebRoot: {webRoot}");
-            
+            var webRoot = _environment.WebRootPath;
             var uploadsFolder = Path.Combine(webRoot, "uploads");
-            if (!Directory.Exists(uploadsFolder)) {
-                Console.WriteLine($"[Upload] Creating folder: {uploadsFolder}");
-                Directory.CreateDirectory(uploadsFolder);
-            }
 
             var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
             var filePath = Path.Combine(uploadsFolder, fileName);

@@ -59,9 +59,14 @@ import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-
                 <div class="menu-item-copy">
                   <div class="menu-item-heading">
                     <h5 class="mb-0 fw-bold text-dark menu-item-title">{{ item.name }}</h5>
-                    <span class="badge rounded-pill" [class.text-bg-success]="item.isAvailable" [class.text-bg-secondary]="!item.isAvailable">
-                      {{ item.isAvailable ? 'Visible' : 'Hidden' }}
-                    </span>
+                    <div class="d-flex align-items-center gap-2 ms-2">
+                      <span class="badge rounded-pill" [class.text-bg-success]="item.isAvailable" [class.text-bg-secondary]="!item.isAvailable">
+                        {{ item.isAvailable ? translate('MENU_ITEM_STATUS_VISIBLE') : translate('MENU_ITEM_STATUS_HIDDEN') }}
+                      </span>
+                      <div class="form-check form-switch m-0 p-0 d-flex align-items-center" style="min-height: auto;">
+                        <input class="form-check-input ms-0" type="checkbox" role="switch" [checked]="item.isAvailable" (change)="toggleAvailability(item)">
+                      </div>
+                    </div>
                   </div>
                   <p class="mb-0 text-muted small menu-item-description">{{ item.description || 'No description' }}</p>
                 </div>
@@ -476,6 +481,19 @@ export class MenuItemManagementComponent implements OnInit {
         this.closeModal();
       });
     }
+  }
+
+  toggleAvailability(item: any) {
+    const updatedItem = { ...item, isAvailable: !item.isAvailable };
+    this.api.put(`/admin/menu-items/${item.id}`, updatedItem).subscribe({
+      next: () => {
+        item.isAvailable = updatedItem.isAvailable;
+      },
+      error: (err) => {
+        console.error('Failed to toggle visibility', err);
+        alert('Error: ' + (err.message || 'Update failed'));
+      }
+    });
   }
 
   delete(id: string) {

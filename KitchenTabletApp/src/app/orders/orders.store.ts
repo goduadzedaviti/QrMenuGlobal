@@ -62,6 +62,7 @@ export class OrdersStore {
       try {
         await this.signalr.connect(profile.deviceId, profile.restaurantId);
         this.signalr.onOrderEvent(event => {
+          console.log('SignalR OrderEvent:', event);
           this.ngZone.run(async () => {
             this.upsert(event.order);
             if (event.type === 'created') {
@@ -72,6 +73,7 @@ export class OrdersStore {
         });
 
         this.signalr.onWaiterCalled(payload => {
+          console.log('SignalR WaiterCalled payload:', payload);
           this.ngZone.run(() => {
             this.waiterCallAlert.set(payload);
             this.waiterCalls.update(calls => [payload, ...calls.filter(c => c.tableLabel !== payload.tableLabel)]);

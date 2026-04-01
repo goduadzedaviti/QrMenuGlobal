@@ -17,6 +17,7 @@ namespace MenuManagement.Application.Features.Objects.Commands
         public string? DescriptionEn { get; set; }
         public string? DescriptionRu { get; set; }
         public string? ImageUrl { get; set; }
+        public string? GoogleReviewUrl { get; set; }
         public string? Address { get; set; }
         public string? AddressEn { get; set; }
         public string? AddressRu { get; set; }
@@ -46,6 +47,7 @@ namespace MenuManagement.Application.Features.Objects.Commands
                 DescriptionEn = request.DescriptionEn,
                 DescriptionRu = request.DescriptionRu,
                 ImageUrl = request.ImageUrl,
+                GoogleReviewUrl = request.GoogleReviewUrl,
                 Address = request.Address,
                 AddressEn = request.AddressEn,
                 AddressRu = request.AddressRu,

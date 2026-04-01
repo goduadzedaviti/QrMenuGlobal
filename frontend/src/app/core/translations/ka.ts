@@ -51,11 +51,12 @@ export const KA = {
   'VENUE_NAME_LABEL': 'ობიექტის დასახელება',
   'VENUE_ADDRESS_LABEL': 'მისამართი',
   'VENUE_DESCRIPTION_LABEL': 'აღწერა',
+  'VENUE_GOOGLE_REVIEW_LABEL': 'Google Review-ს ლინკი',
   'VENUE_PHOTO_LABEL': 'ფოტო',
   'VENUE_STATUS_ACTIVE': 'აქტიური',
   'VENUE_STATUS_INACTIVE': 'არაქტიური',
   'VENUE_MODAL_CREATE': 'ახალი მენიუს შექმნა',
-  'VENUE_MODAL_EDIT': 'მენიუს რედაქტირება',
+  'VENUE_MODAL_EDIT': 'ობიექტის რედაქტირება',
   'VENUE_CHANGE_PHOTO': 'ფოტოს შეცვლა',
   'VENUE_UPDATE_BUTTON': 'განახლება',
   'VENUE_CREATE_BUTTON': 'შექმნა',
@@ -77,6 +78,8 @@ export const KA = {
   'MENU_ITEM_DESCRIPTION_LABEL': 'აღწერა',
   'MENU_ITEM_UPDATE_BUTTON': 'განახლება',
   'MENU_ITEM_CREATE_BUTTON': 'შექმნა',
+  'MENU_ITEM_STATUS_VISIBLE': 'გამოჩენილი',
+  'MENU_ITEM_STATUS_HIDDEN': 'დამალული',
 
   // Auth
   'LOGIN_TITLE': 'შესვლა',
