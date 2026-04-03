@@ -5,7 +5,8 @@
 </div>
 } @else if (ordersStore.newOrderAlert()) {
 <div class="new-order-alert" (click)="ordersStore.dismissAlert()">
-  <h1>ახალი შეკვეთა: #{{ ordersStore.newOrderAlert()?.orderNumber }}</h1>
+  <h1>მაგიდა: {{ ordersStore.newOrderAlert()?.tableLabel }}</h1>
+  <h2>ახალი შეკვეთა: #{{ ordersStore.newOrderAlert()?.orderNumber }}</h2>
   <p>(დაკლიკეთ სიის გასახსნელად)</p>
 </div>
 }

@@ -125,9 +125,15 @@ h2 {
 }
 
 .new-order-alert h1 {
-  font-size: 5rem;
+  font-size: 6rem;
   margin: 0;
+}
+
+.new-order-alert h2 {
+  font-size: 3rem;
+  margin-top: 0;
   margin-bottom: 2rem;
+  opacity: 0.9;
 }
 
 .new-order-alert p {
