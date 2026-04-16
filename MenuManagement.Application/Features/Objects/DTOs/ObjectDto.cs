@@ -13,6 +13,7 @@ namespace MenuManagement.Application.Features.Objects.DTOs
         public string? DescriptionRu { get; set; }
         public string? ImageUrl { get; set; }
         public string? GoogleReviewUrl { get; set; }
+        public string? TripAdvisorUrl { get; set; }
         public string? Address { get; set; }
         public string? AddressEn { get; set; }
         public string? AddressRu { get; set; }

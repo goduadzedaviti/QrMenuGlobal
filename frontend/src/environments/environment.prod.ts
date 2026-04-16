@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://qrmenu-backend-api.onrender.com/api',
-  baseUrl: 'https://qrmenu-backend-api.onrender.com'
+  apiUrl: 'https://growfy-001-site1.rtempurl.com/api',
+  baseUrl: 'https://growfy-001-site1.rtempurl.com'
 };

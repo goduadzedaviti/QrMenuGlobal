@@ -39,7 +39,15 @@ namespace MenuManagement.Application.Features.Objects.Queries
             // Everyone else (including Admin) is filtered by UserId.
             if (!_currentUserService.IsSystemAdmin)
             {
-                query = query.Where(o => o.UserId == _currentUserService.UserId);
+                if (_currentUserService.UserId.HasValue)
+                {
+                    query = query.Where(o => o.UserId == _currentUserService.UserId);
+                }
+                else
+                {
+                    // Public View: Only active ones
+                    query = query.Where(o => o.IsActive);
+                }
             }
 
             var totalItems = await query.CountAsync(cancellationToken);

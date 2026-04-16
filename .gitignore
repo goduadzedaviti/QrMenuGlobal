@@ -41,7 +41,15 @@ menu-frontend/dist/
 .DS_Store
 Thumbs.db
 artifacts/
-MenuManagement.API/wwwroot/uploads/
+publish/
+deploy.zip
+
+# Upload paths inside wwwroot
+MenuManagement.API/wwwroot/
+serve_spa.py
+
+# IDE
+.idea/
 
 ## [Environment / Secrets]
 .env

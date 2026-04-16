@@ -20,8 +20,10 @@ namespace MenuManagement.Application.Features.MenuItems.Commands
         public string? DescriptionRu { get; set; }
         public decimal Price { get; set; }
         public string? ImageUrl { get; set; }
+        public string? ModelUrl { get; set; }
         public int SortOrder { get; set; }
         public bool IsAvailable { get; set; } = true;
+        public bool ShowAr { get; set; } = true;
     }
 
     public class CreateMenuItemCommandHandler : IRequestHandler<CreateMenuItemCommand, OperationResult<Guid>>
@@ -52,8 +54,10 @@ namespace MenuManagement.Application.Features.MenuItems.Commands
                 DescriptionRu = request.DescriptionRu,
                 Price = request.Price,
                 ImageUrl = request.ImageUrl,
+                ModelUrl = request.ModelUrl,
                 SortOrder = request.SortOrder,
-                IsAvailable = request.IsAvailable
+                IsAvailable = request.IsAvailable,
+                ShowAr = request.ShowAr
             };
 
             _context.MenuItems.Add(entity);
