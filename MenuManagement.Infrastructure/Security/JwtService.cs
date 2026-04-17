@@ -21,26 +21,41 @@ namespace MenuManagement.Infrastructure.Security
 
         public string GenerateToken(UserEntity user)
         {
-            var jwtSettings = _configuration.GetSection("JwtSettings");
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? "superSecretKey1234567890123456"));
-
-            var claims = new List<Claim>
+            try 
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Username),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.Role, user.Role),
-                new Claim("id", user.Id.ToString())
-            };
+                var jwtSettings = _configuration.GetSection("JwtSettings");
+                
+                // FORCE a 32-character key to avoid "192 bits" error on production
+                string keyStr = jwtSettings["Key"] ?? "ThisIsAVerySecretKeyForQrMenuSystem123456789!";
+                if (keyStr.Length < 32)
+                {
+                    keyStr = "ThisIsAVerySecretKeyForQrMenuSystem123456789!";
+                }
 
-            var token = new JwtSecurityToken(
-                issuer: jwtSettings["Issuer"],
-                audience: jwtSettings["Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddDays(7),
-                signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
-            );
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyStr));
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+                var claims = new List<Claim>
+                {
+                    new Claim(JwtRegisteredClaimNames.Sub, user.Username ?? "unknown"),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                    new Claim(ClaimTypes.Role, user.Role ?? "User"),
+                    new Claim("id", user.Id.ToString())
+                };
+
+                var token = new JwtSecurityToken(
+                    issuer: jwtSettings["Issuer"] ?? "MenuManagementAPI",
+                    audience: jwtSettings["Audience"] ?? "MenuManagementFrontend",
+                    claims: claims,
+                    expires: DateTime.UtcNow.AddDays(7),
+                    signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
+                );
+
+                return new JwtSecurityTokenHandler().WriteToken(token);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"JWT Generation failed: {ex.Message}. Stack: {ex.StackTrace}");
+            }
         }
     }
 }

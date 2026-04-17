@@ -13,8 +13,10 @@ namespace MenuManagement.Domain.Entities
         public string? DescriptionRu { get; set; }
         public decimal Price { get; set; }
         public string? ImageUrl { get; set; }
+        public string? ModelUrl { get; set; }
         public int SortOrder { get; set; }
         public bool IsAvailable { get; set; } = true;
+        public bool ShowAr { get; set; } = true;
 
         public MenuEntity Menu { get; set; } = null!;
     }

@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using MenuManagement.API.Hubs;
 using MenuManagement.API.Services;
 using MenuManagement.Application.Common.Interfaces;
+using Microsoft.AspNetCore.StaticFiles;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -78,7 +79,14 @@ builder.Services.AddSwaggerGen(c =>
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var key = Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? "superSecretKey12345678901234567890123456789012");
+
+// Ensure validation key matches the generation key
+string validationKey = jwtSettings["Key"] ?? "ThisIsAVerySecretKeyForQrMenuSystem123456789!";
+if (validationKey.Length < 32)
+{
+    validationKey = "ThisIsAVerySecretKeyForQrMenuSystem123456789!";
+}
+var key = Encoding.UTF8.GetBytes(validationKey);
 
 builder.Services.AddAuthentication(options =>
 {
@@ -93,8 +101,8 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings["Issuer"],
-        ValidAudience = jwtSettings["Audience"],
+        ValidIssuer = jwtSettings["Issuer"] ?? "MenuManagementAPI",
+        ValidAudience = jwtSettings["Audience"] ?? "MenuManagementFrontend",
         IssuerSigningKey = new SymmetricSecurityKey(key)
     };
 });
@@ -163,7 +171,15 @@ app.UseSwaggerUI(c => {
 
 app.UseMiddleware<ExceptionMiddleware>();
 
-app.UseStaticFiles();
+var provider = new FileExtensionContentTypeProvider();
+provider.Mappings[".gltf"] = "model/gltf+json";
+provider.Mappings[".glb"] = "model/gltf-binary";
+
+app.UseDefaultFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = provider
+});
 
 if (!app.Environment.IsDevelopment())
 {
@@ -176,6 +192,7 @@ app.UseAuthorization();
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 app.MapControllers();
 app.MapHub<KitchenHub>("/hubs/kitchen");
+app.MapFallbackToFile("index.html");
 
 // Apply migrations and seed startup data.
 using (var scope = app.Services.CreateScope())
@@ -185,7 +202,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         await context.Database.MigrateAsync();
-        await DatabaseSeeder.SeedAsync(context, includeSampleData: !app.Environment.IsProduction());
+        await DatabaseSeeder.SeedAsync(context, includeSampleData: false);
         await KitchenSchemaBootstrapper.EnsureAsync(context);
     }
     catch (Exception ex)

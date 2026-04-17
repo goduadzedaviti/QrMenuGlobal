@@ -52,6 +52,7 @@ export const KA = {
   'VENUE_ADDRESS_LABEL': 'მისამართი',
   'VENUE_DESCRIPTION_LABEL': 'აღწერა',
   'VENUE_GOOGLE_REVIEW_LABEL': 'Google Review-ს ლინკი',
+  'VENUE_TRIPADVISOR_LABEL': 'TripAdvisor-ის ლინკი',
   'VENUE_PHOTO_LABEL': 'ფოტო',
   'VENUE_STATUS_ACTIVE': 'აქტიური',
   'VENUE_STATUS_INACTIVE': 'არაქტიური',

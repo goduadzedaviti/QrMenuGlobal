@@ -19,6 +19,7 @@ namespace MenuManagement.Application.Features.Objects.Commands
         public string? DescriptionRu { get; set; }
         public string? ImageUrl { get; set; }
         public string? GoogleReviewUrl { get; set; }
+        public string? TripAdvisorUrl { get; set; }
         public string? Address { get; set; }
         public string? AddressEn { get; set; }
         public string? AddressRu { get; set; }
@@ -54,6 +55,7 @@ namespace MenuManagement.Application.Features.Objects.Commands
             entity.DescriptionRu = request.DescriptionRu;
             entity.ImageUrl = request.ImageUrl;
             entity.GoogleReviewUrl = request.GoogleReviewUrl;
+            entity.TripAdvisorUrl = request.TripAdvisorUrl;
             entity.Address = request.Address;
             entity.AddressEn = request.AddressEn;
             entity.AddressRu = request.AddressRu;

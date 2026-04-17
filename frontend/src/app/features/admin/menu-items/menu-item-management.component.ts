@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -13,6 +13,7 @@ import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-
   selector: 'app-menu-item-management',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, DragDropModule],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="container mt-4 pb-5 admin-page">
       <!-- Breadcrumbs & Nav -->
@@ -50,10 +51,19 @@ import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-
 
               <!-- Left Side: Image + Info -->
               <div class="menu-item-main">
-                <div class="flex-shrink-0" *ngIf="item.imageUrl">
+                <div class="flex-shrink-0" *ngIf="item.showAr && item.modelUrl">
+                  <model-viewer
+                    [src]="getFullUrl(item.modelUrl)"
+                    class="rounded-3 shadow-sm"
+                    style="width: 60px; height: 60px; background: #f8f9fa;"
+                    auto-rotate
+                    interaction-prompt="none">
+                  </model-viewer>
+                </div>
+                <div class="flex-shrink-0" *ngIf="(!item.showAr || !item.modelUrl) && item.imageUrl">
                   <img [src]="getFullUrl(item.imageUrl)" class="rounded-3 shadow-sm" style="width: 60px; height: 60px; object-fit: cover;">
                 </div>
-                <div class="flex-shrink-0 bg-light rounded-3 d-flex align-items-center justify-content-center" *ngIf="!item.imageUrl" style="width: 60px; height: 60px;">
+                <div class="flex-shrink-0 bg-light rounded-3 d-flex align-items-center justify-content-center" *ngIf="(!item.showAr || !item.modelUrl) && !item.imageUrl" style="width: 60px; height: 60px;">
                   <i class="bi bi-image text-muted opacity-50"></i>
                 </div>
                 <div class="menu-item-copy">
@@ -210,15 +220,59 @@ import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-
                     <input #fileInput type="file" class="d-none" (change)="onFileSelected($event)" accept="image/*">
                   </div>
 
-                  <div class="alert alert-info py-2 small border-0 rounded-3 mb-0">
+                  <div class="alert alert-info py-2 small border-0 rounded-3 mb-3">
                     <i class="bi bi-info-circle me-2"></i> Max size 2MB. Square images work best.
+                  </div>
+
+                  <label class="form-label fw-bold small text-uppercase text-muted d-block mt-4">3D Model (GLTF/GLB)</label>
+                  <div class="model-upload-container text-center p-3 border-2 border-dashed rounded-4 bg-light mb-0" 
+                       style="border-style: dashed !important; border-color: #dee2e6 !important;">
+                    <div *ngIf="!editingItem.modelUrl && !isUploadingModel" (click)="modelInput.click()" style="cursor: pointer;">
+                      <i class="bi bi-box display-4 text-muted"></i>
+                      <p class="small text-muted mt-2">Click to upload GLTF/GLB</p>
+                    </div>
+                    
+                    <div *ngIf="isUploadingModel" class="py-4">
+                      <div class="spinner-border text-primary" role="status"></div>
+                      <p class="small text-muted mt-2">Uploading Model...</p>
+                    </div>
+
+                    <div *ngIf="editingItem.modelUrl && !isUploadingModel" class="position-relative p-2">
+                      <div class="bg-white rounded-3 shadow-sm p-3 mb-2 d-flex align-items-center justify-content-center">
+                         <i class="bi bi-file-earmark-check fs-1 text-success me-2"></i>
+                         <span class="text-dark small fw-bold">Model uploaded</span>
+                      </div>
+                      <div class="mt-2 d-flex justify-content-center gap-2">
+                         <button class="btn btn-sm btn-outline-primary rounded-pill px-3" (click)="modelInput.click()">
+                           <i class="bi bi-arrow-repeat me-1"></i> {{ translate('BUTTON_EDIT') }}
+                         </button>
+                         <button class="btn btn-sm btn-outline-danger rounded-pill px-3" (click)="editingItem.modelUrl = null">
+                           <i class="bi bi-trash"></i> Remove
+                         </button>
+                      </div>
+                    </div>
+                    
+                    <input #modelInput type="file" class="d-none" (change)="onModelSelected($event)" accept=".gltf,.glb">
+                  </div>
+
+                  <div class="mt-4" *ngIf="editingItem.modelUrl">
+                    <div class="form-check form-switch fs-6">
+                      <input
+                        id="menu-item-show-ar"
+                        type="checkbox"
+                        class="form-check-input"
+                        [(ngModel)]="editingItem.showAr">
+                      <label class="form-check-label fw-bold text-dark" for="menu-item-show-ar">
+                        Display 3D Model instead of photo
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
             <div class="modal-footer border-0 bg-light py-3 px-4">
               <button type="button" class="btn btn-link text-muted text-decoration-none fw-bold me-auto" (click)="closeModal()">{{ translate('BUTTON_CANCEL') }}</button>
-              <button type="button" class="btn btn-primary rounded-pill px-5 py-2 shadow-sm fw-bold" (click)="save()" [disabled]="isUploading">
+              <button type="button" class="btn btn-primary rounded-pill px-5 py-2 shadow-sm fw-bold" (click)="save()" [disabled]="isUploading || isUploadingModel">
                 {{ editingItem.id ? translate('MENU_ITEM_UPDATE_BUTTON') : translate('MENU_ITEM_CREATE_BUTTON') }}
               </button>
             </div>
@@ -364,6 +418,7 @@ export class MenuItemManagementComponent implements OnInit {
   isModalOpen = false;
   editingItem: any = {};
   isUploading = false;
+  isUploadingModel = false;
   activeLang: 'ka' | 'en' | 'ru' = 'ka';
 
   constructor(private api: ApiService, private route: ActivatedRoute, private translationService: TranslationService, private location: Location) {}
@@ -457,8 +512,37 @@ export class MenuItemManagementComponent implements OnInit {
     }
   }
 
+  async onModelSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.isUploadingModel = true;
+      try {
+        const formData = new FormData();
+        formData.append('file', file, file.name);
+        
+        this.api.post('/admin/upload/model', formData).pipe(
+          timeout(60000)
+        ).subscribe({
+          next: (res: any) => {
+            this.editingItem.modelUrl = res.modelUrl;
+            this.isUploadingModel = false;
+          },
+          error: (err) => {
+            console.error('Model upload error', err);
+            this.isUploadingModel = false;
+            alert('Model upload failed: ' + (err.message || 'Server error'));
+          }
+        });
+      } catch (err: any) {
+        console.error('Model processing/upload failed', err);
+        this.isUploadingModel = false;
+        alert('Failed: ' + err.message);
+      }
+    }
+  }
+
   openCreate() {
-    this.editingItem = { menuId: this.menuId, price: 0, sortOrder: 0, isAvailable: true };
+    this.editingItem = { menuId: this.menuId, price: 0, sortOrder: 0, isAvailable: true, showAr: true };
     this.activeLang = 'ka';
     this.isModalOpen = true;
   }

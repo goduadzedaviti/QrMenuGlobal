@@ -96,7 +96,6 @@ import { timeout } from 'rxjs';
                 <div class="d-inline-block position-relative">
                   <div class="rounded-4 overflow-hidden shadow-sm bg-light d-flex align-items-center justify-content-center" style="width: 150px; height: 100px; border: 2px dashed #dee2e6;">
                     <img *ngIf="editingObject.imageUrl && !isUploading" [src]="getFullUrl(editingObject.imageUrl)" class="w-100 h-100 object-fit-cover">
-                    <!-- Loading Spinner -->
                     <div *ngIf="isUploading" class="p-3">
                       <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
@@ -110,6 +109,16 @@ import { timeout } from 'rxjs';
                 </div>
                 <input #fileInput type="file" (change)="onFileSelected($event)" accept="image/*" class="d-none">
                 <div class="mt-2 text-muted small">{{ isUploading ? 'Uploading...' : translate('VENUE_PHOTO_LABEL') }}</div>
+              </div>
+
+              <!-- Global Review Links -->
+              <div class="mb-3">
+                <label class="form-label fw-medium text-primary small"><i class="bi bi-google me-2"></i>Google Link</label>
+                <input [(ngModel)]="editingObject.googleReviewUrl" class="form-control form-control-sm rounded-3 border-primary" placeholder="https://g.page/r/...">
+              </div>
+              <div class="mb-4">
+                <label class="form-label fw-medium text-success small"><i class="bi bi-tripadvisor me-2"></i>TripAdvisor</label>
+                <input [(ngModel)]="editingObject.tripAdvisorUrl" class="form-control form-control-sm rounded-3 border-success" placeholder="https://www.tripadvisor.com/...">
               </div>
 
               <!-- Language Tabs -->
@@ -132,10 +141,6 @@ import { timeout } from 'rxjs';
                 <div class="mb-3">
                   <label class="form-label fw-medium">{{ translate('FIELD_DESCRIPTION_KA') }}</label>
                   <textarea [(ngModel)]="editingObject.description" class="form-control rounded-3" [placeholder]="translate('VENUE_DESCRIPTION_LABEL')" rows="3"></textarea>
-                </div>
-                <div class="mb-3">
-                  <label class="form-label fw-medium text-primary"><i class="bi bi-google me-2"></i>{{ translate('VENUE_GOOGLE_REVIEW_LABEL') }}</label>
-                  <input [(ngModel)]="editingObject.googleReviewUrl" class="form-control rounded-3 border-primary" placeholder="https://g.page/r/...">
                 </div>
               </div>
 

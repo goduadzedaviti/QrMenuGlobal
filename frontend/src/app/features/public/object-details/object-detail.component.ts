@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, HostListener, OnDestroy, OnInit, CUSTOM_ELEMENTS_SCHEMA, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -18,6 +18,7 @@ interface CartItem {
   selector: 'app-object-detail',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="page" *ngIf="object">
       <header class="hero">
@@ -94,7 +95,27 @@ interface CartItem {
                   <p *ngIf="getDisplayDescription(item)">{{ getDisplayDescription(item) }}</p>
                   <span class="price">{{ item.price | currency }}</span>
                 </div>
-                <img *ngIf="item.imageUrl" [src]="getFullUrl(item.imageUrl)" [alt]="getDisplayName(item)">
+                <ng-container *ngIf="item.showAr && item.modelUrl">
+                  <model-viewer
+                    #cardViewer
+                    [src]="getFullUrl(item.modelUrl)"
+                    class="item-card__model"
+                    ar
+                    ar-modes="webxr scene-viewer quick-look"
+                    ar-placement="floor"
+                    auto-rotate
+                    camera-controls
+                    interaction-prompt="none"
+                    shadow-intensity="1">
+                  </model-viewer>
+                  <button
+                    type="button"
+                    class="secondary-button mt-1"
+                    (click)="activateAR(cardViewer)">
+                    <i class="bi bi-box me-1"></i> {{ t('viewIn3D') }}
+                  </button>
+                </ng-container>
+                <img *ngIf="(!item.showAr || !item.modelUrl) && item.imageUrl" [src]="getFullUrl(item.imageUrl)" [alt]="getDisplayName(item)">
                 <button type="button" class="item-card__add" (click)="addToCart(item)">
                   {{ t('addToOrder') }}
                 </button>
@@ -113,13 +134,33 @@ interface CartItem {
       <div class="modal-overlay" *ngIf="selectedItem" (click)="closeItemDetails()">
         <div class="modal-card" (click)="$event.stopPropagation()">
           <button type="button" class="modal-card__close" (click)="closeItemDetails()">×</button>
-          <img *ngIf="selectedItem.imageUrl" [src]="getFullUrl(selectedItem.imageUrl)" [alt]="getDisplayName(selectedItem)">
+          <ng-container *ngIf="selectedItem.showAr && selectedItem.modelUrl">
+            <model-viewer
+              #itemModelViewer
+              [src]="getFullUrl(selectedItem.modelUrl)"
+              class="modal-card__model"
+              ar
+              ar-modes="webxr scene-viewer quick-look"
+              ar-placement="floor"
+              auto-rotate
+              camera-controls
+              shadow-intensity="1">
+            </model-viewer>
+          </ng-container>
+          <img *ngIf="(!selectedItem.showAr || !selectedItem.modelUrl) && selectedItem.imageUrl" [src]="getFullUrl(selectedItem.imageUrl)" [alt]="getDisplayName(selectedItem)">
           <div class="modal-card__body">
             <h2>{{ getDisplayName(selectedItem) }}</h2>
             <span class="price">{{ selectedItem.price | currency }}</span>
             <p>{{ getDisplayDescription(selectedItem) || t('noDescription') }}</p>
             <button type="button" class="primary-button" (click)="addToCart(selectedItem); closeItemDetails()">
               {{ t('addToOrder') }}
+            </button>
+            <button
+              type="button"
+              class="secondary-button mt-2"
+              *ngIf="selectedItem.showAr && selectedItem.modelUrl"
+              (click)="activateAR()">
+              <i class="bi bi-box me-2"></i> {{ t('viewIn3D') }}
             </button>
           </div>
         </div>
@@ -186,13 +227,19 @@ interface CartItem {
         </div>
       </div>
 
-      <!-- Google Review at the bottom -->
-      <div class="footer-reviews" *ngIf="object.googleReviewUrl">
+      <!-- Reviews at the bottom -->
+      <div class="footer-reviews" *ngIf="object.googleReviewUrl || object.tripAdvisorUrl">
         <div class="section-tag mb-2">{{ t('rateUs') }}</div>
-        <a [href]="object.googleReviewUrl" target="_blank" class="review-button">
-          <img src="https://www.google.com/images/branding/googleg/1x/googleg_standard_color_128dp.png" alt="Google">
-          <span>{{ t('leaveReview') }}</span>
-        </a>
+        <div class="d-flex flex-column align-items-center gap-3">
+          <a *ngIf="object.googleReviewUrl" [href]="object.googleReviewUrl" target="_blank" class="review-button w-100 justify-content-center" style="max-width: 300px;">
+            <img src="https://www.google.com/images/branding/googleg/1x/googleg_standard_color_128dp.png" alt="Google">
+            <span>{{ t('leaveReview') }}</span>
+          </a>
+          <a *ngIf="object.tripAdvisorUrl" [href]="object.tripAdvisorUrl" target="_blank" class="review-button review-button--tripadvisor w-100 justify-content-center" style="max-width: 300px;">
+            <i class="bi bi-tripadvisor fs-5"></i>
+            <span>{{ t('leaveTripAdvisorReview') }}</span>
+          </a>
+        </div>
       </div>
     </div>
   `,
@@ -294,6 +341,22 @@ interface CartItem {
       background: #ffffff;
       border-color: #f97316;
     }
+
+    .review-button--tripadvisor {
+      border-color: #34e0a1 !important;
+      color: #000000 !important;
+    }
+
+    .review-button--tripadvisor:hover {
+      box-shadow: 0 15px 35px rgba(52, 224, 161, 0.25) !important;
+      border-color: #00af87 !important;
+    }
+
+    .d-flex { display: flex; }
+    .flex-wrap { flex-wrap: wrap; }
+    .justify-content-center { justify-content: center; }
+    .gap-3 { gap: 1rem; }
+    .fs-5 { font-size: 1.25rem; }
 
     .review-button img {
       width: 20px;
@@ -489,12 +552,17 @@ interface CartItem {
       background: #ffffff;
     }
 
-    .item-card img {
+    .item-card img,
+    .item-card__model {
       width: 90px;
       height: 90px;
       border-radius: 16px;
       object-fit: cover;
       grid-row: span 2;
+    }
+
+    .item-card__model {
+      background: #f8f9fa;
     }
 
     .item-card__copy h3 {
@@ -527,6 +595,28 @@ interface CartItem {
       color: #ffffff;
       padding: 0.85rem 1rem;
       font-weight: 800;
+      border: none;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .secondary-button {
+      border-radius: 16px;
+      background: #0d6efd;
+      color: #ffffff;
+      padding: 0.85rem 1rem;
+      font-weight: 800;
+      border: none;
+      width: 100%;
+    }
+
+    .mt-2 { margin-top: 0.5rem !important; }
+
+    .secondary-button.mt-1 {
+      padding: 0.5rem;
+      font-size: 0.85rem;
+      margin-top: 0.4rem !important;
+      grid-column: 1 / -1;
     }
 
     .item-card__add {
@@ -564,11 +654,16 @@ interface CartItem {
       position: relative;
     }
 
-    .modal-card img {
+    .modal-card img,
+    .modal-card__model {
       width: 100%;
       height: 240px;
       object-fit: cover;
       display: block;
+    }
+
+    .modal-card__model {
+      background: #f8f9fa;
     }
 
     .modal-card__body,
@@ -718,6 +813,8 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   orderSuccess = '';
   apiUrl = environment.baseUrl;
   isTabsElevated = false;
+
+  @ViewChild('itemModelViewer') itemModelViewer!: ElementRef;
   orderForm = {
     customerName: '',
     tableLabel: '',
@@ -751,7 +848,9 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       back: 'უკან',
       callWaiter: 'მიმტანის გამოძახება',
       rateUs: 'მოგვეცით შეფასება',
-      leaveReview: 'დატოვეთ შეფასება'
+      leaveReview: 'დატოვეთ შეფასება',
+      leaveTripAdvisorReview: 'შეაფასეთ TripAdvisor-ზე',
+      viewIn3D: '3D-ში ნახვა'
     },
     en: {
       chooseLanguage: 'Choose your language',
@@ -778,7 +877,9 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       back: 'Back',
       callWaiter: 'Call Waiter',
       rateUs: 'Rate Us',
-      leaveReview: 'Leave a Review'
+      leaveReview: 'Leave a Review',
+      leaveTripAdvisorReview: 'Review on TripAdvisor',
+      viewIn3D: 'View in 3D'
     },
     ru: {
       chooseLanguage: 'Выберите язык',
@@ -805,7 +906,9 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       back: 'Назад',
       callWaiter: 'Позвать официанта',
       rateUs: 'Оцените нас',
-      leaveReview: 'Оставить отзыв'
+      leaveReview: 'Оставить отзыв',
+      leaveTripAdvisorReview: 'Отзыв на TripAdvisor',
+      viewIn3D: 'Посмотреть в 3D'
     },
   };
 
@@ -899,6 +1002,13 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     this.cart = this.cart
       .map(item => item.menuItemId === menuItemId ? { ...item, quantity: item.quantity + delta } : item)
       .filter(item => item.quantity > 0);
+  }
+
+  activateAR(viewer?: any) {
+    const target = viewer?.nativeElement || viewer || this.itemModelViewer?.nativeElement;
+    if (target && typeof target.activateAR === 'function') {
+      target.activateAR();
+    }
   }
 
   openCart() {
