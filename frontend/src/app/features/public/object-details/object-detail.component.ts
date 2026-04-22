@@ -42,17 +42,6 @@ interface CartItem {
       </header>
 
       <main class="content">
-        <!-- Step 1: Language Choice -->
-        <section *ngIf="activeLanguages.length > 0 && !selectedLanguage" class="panel">
-          <div class="section-tag">Step 1</div>
-          <h2>{{ t('chooseLanguage') }}</h2>
-          <div class="language-grid">
-            <button *ngFor="let language of activeLanguages" type="button" class="language-card" (click)="selectLanguage(language)">
-              <strong>{{ getLanguageLabel(language) }}</strong>
-              <span>{{ getLanguageNativeLabel(language) }}</span>
-            </button>
-          </div>
-        </section>
 
         <!-- Step 2: Unified Menu with ScrollSpy -->
         <ng-container *ngIf="selectedLanguage || activeLanguages.length === 0">
@@ -115,6 +104,8 @@ interface CartItem {
                         ar
                         ar-modes="webxr scene-viewer quick-look"
                         auto-rotate
+                        camera-controls
+                        touch-action="pan-y"
                         interaction-prompt="none">
                       </model-viewer>
 
@@ -123,9 +114,12 @@ interface CartItem {
                       </button>
                     </div>
                     <div class="premium-card__content" (click)="openItemDetails(item)">
-                      <div class="premium-card__price">{{ item.price | currency }}</div>
+                      <button type="button" class="view-3d-btn--card" *ngIf="item.showAr && item.modelUrl">
+                        <i class="bi bi-box"></i> {{ t('viewIn3D') }}
+                      </button>
                       <h3 class="premium-card__title">{{ getDisplayName(item) }}</h3>
                       <p class="premium-card__subtitle" *ngIf="getDisplayDescription(item)">{{ getDisplayDescription(item) }}</p>
+                      <div class="premium-card__price">{{ item.price | currency }}</div>
                     </div>
                   </article>
                 </div>
@@ -169,6 +163,9 @@ interface CartItem {
             </div>
             <p class="modal-description">{{ getDisplayDescription(selectedItem) || t('noDescription') }}</p>
             <div class="modal-actions">
+              <button type="button" class="view-3d-btn--modal" *ngIf="selectedItem.showAr && selectedItem.modelUrl" (click)="itemModelViewer.nativeElement.activateAR()">
+                <i class="bi bi-box"></i> {{ t('viewIn3D') }}
+              </button>
               <button type="button" class="primary-button" (click)="addToCart(selectedItem); closeItemDetails()">
                 {{ t('addToOrder') }}
               </button>
@@ -284,6 +281,7 @@ interface CartItem {
 
     .hero__languages {
       display: flex;
+      flex-wrap: wrap;
       gap: 0.5rem;
       margin-bottom: 0.75rem;
     }
@@ -303,9 +301,17 @@ interface CartItem {
 
     /* Content Area */
     .content {
+      width: 100%;
       max-width: 600px;
       margin: 0 auto;
       padding-bottom: 5rem;
+    }
+
+    @media (min-width: 768px) {
+      .content { max-width: 800px; }
+    }
+    @media (min-width: 1200px) {
+      .content { max-width: 1100px; }
     }
 
     .panel {
@@ -322,7 +328,6 @@ interface CartItem {
       margin-bottom: 0.5rem;
     }
 
-    /* Sticky Nav (Reference Look) */
     .category-nav {
       position: sticky;
       top: 0;
@@ -331,6 +336,9 @@ interface CartItem {
       backdrop-filter: blur(12px);
       border-bottom: 1px solid #f1f5f9;
       transition: all 0.3s ease;
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
     }
 
     .category-nav__wrapper {
@@ -338,6 +346,8 @@ interface CartItem {
       align-items: center;
       padding: 0.5rem 1rem;
       gap: 0.5rem;
+      width: 100%;
+      max-width: 100%;
     }
 
     .search-toggle {
@@ -377,11 +387,16 @@ interface CartItem {
     }
 
     .category-nav__scroll {
+      flex: 1;
+      min-width: 0;
+      max-width: 100%;
       display: flex;
       overflow-x: auto;
       gap: 1.5rem;
       padding: 0.25rem 0;
       scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
     }
     .category-nav__scroll::-webkit-scrollbar { display: none; }
 
@@ -397,6 +412,7 @@ interface CartItem {
       cursor: pointer;
       transition: all 0.2s;
       border-bottom: 2px solid transparent;
+      flex-shrink: 0;
     }
 
     .category-nav__link--active {
@@ -412,7 +428,7 @@ interface CartItem {
     .menu-section {
       padding-top: 4rem;
       margin-top: -3rem;
-      border-bottom: 1px solid #f1f5f9;
+      border-bottom: 2px solid #cbd5e1;
       padding-bottom: 1rem;
     }
 
@@ -460,7 +476,14 @@ interface CartItem {
     .item-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
+      gap: 0.75rem;
+    }
+
+    @media (min-width: 768px) {
+      .item-grid { 
+        gap: 1.5rem; 
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      }
     }
 
     /* Premium Card (Reference Look) */
@@ -468,7 +491,7 @@ interface CartItem {
       background: white;
       border-radius: 12px;
       overflow: hidden;
-      border: 1px solid #f1f5f9;
+      border: 0;
       display: flex;
       flex-direction: column;
     }
@@ -476,8 +499,9 @@ interface CartItem {
     .premium-card__image-container {
       position: relative;
       width: 100%;
-      aspect-ratio: 1.1 / 1;
+      height: 180px; /* Fixed height for absolute consistency */
       background: #f8fafc;
+      overflow: hidden;
     }
 
     .premium-card__image-container img,
@@ -509,42 +533,56 @@ interface CartItem {
     .premium-card__content {
       padding: 0.75rem;
       flex-grow: 1;
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
     }
 
     .premium-card__price {
       color: #6366f1;
       font-weight: 700;
-      font-size: 0.9rem;
-      margin-bottom: 0.25rem;
+      font-size: 0.95rem;
+      margin-top: auto;
+      padding-top: 0.5rem;
     }
 
     .premium-card__title {
-      margin: 0;
+      margin: 0.25rem 0 0;
       font-size: 0.95rem;
       font-weight: 700;
       color: #18181b;
       line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 2.5rem; 
+      max-height: 2.5rem;
     }
 
     .premium-card__subtitle {
-      margin: 0.2rem 0 0;
+      margin: 0.25rem 0 0;
       font-size: 0.8rem;
       color: #71717a;
       display: -webkit-box;
       -webkit-line-clamp: 1;
       -webkit-box-orient: vertical;
       overflow: hidden;
+      min-height: 1.1rem;
+      max-height: 1.1rem;
     }
 
     /* Global Actions */
     .global-actions {
       display: flex;
+      flex-wrap: wrap;
       gap: 0.75rem;
       padding: 1.5rem 1rem;
     }
 
     .waiter-button {
       flex: 1;
+      min-width: 120px;
       background: #fef2f2;
       color: #ef4444;
       border: 1px solid #fee2e2;
@@ -552,6 +590,47 @@ interface CartItem {
       border-radius: 12px;
       font-weight: 700;
       font-family: inherit;
+      white-space: normal;
+      word-break: normal;
+      font-size: 0.95rem;
+    }
+
+    .view-3d-btn--card {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: #e0e7ff;
+      color: #4338ca;
+      border: 0;
+      padding: 0.3rem 0.6rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      width: fit-content;
+    }
+
+    .view-3d-btn--modal {
+      width: 100%;
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+      padding: 0.8rem;
+      border-radius: 12px;
+      font-weight: 700;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .view-3d-btn--modal:hover {
+      background: #e2e8f0;
     }
 
     /* Cart FAB */
@@ -841,13 +920,14 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   private observer?: IntersectionObserver;
   private isManualScrolling = false;
   collapsedCategories: Set<string> = new Set();
+  private visibleCategoryIds = new Set<string>();
   object: any;
   menus: any[] = [];
   selectedMenu: any;
   items: any[] = [];
   selectedItem: any = null;
   activeLanguages: LanguageCode[] = [];
-  selectedLanguage: LanguageCode | null = null;
+  selectedLanguage: LanguageCode | null = 'ka';
   cart: CartItem[] = [];
   isCartOpen = false;
   isSubmittingOrder = false;
@@ -868,7 +948,7 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly uiText: Record<LanguageCode, Record<string, string>> = {
     ka: {
       chooseLanguage: 'აირჩიე ენა',
-      chooseCategory: 'აირჩიე კატეგორია',
+      chooseCategory: 'მოძებნე კერძი',
       category: 'კატეგორია',
       noItems: 'ამ კატეგორიაში კერძები ჯერ არ არის დამატებული.',
       noDescription: 'აღწერა არ არის მითითებული.',
@@ -889,8 +969,8 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       submitting: 'იგზავნება...',
       orderPlaced: 'შეკვეთა გაიგზავნა სამზარეულოში',
       back: 'უკან',
-      callWaiter: 'მიმტანის გამოძახება',
-      requestBill: 'ანგარიშის მოთხოვნა',
+      callWaiter: 'მიმტანი',
+      requestBill: 'ანგარიში',
       rateUs: 'მოგვეცით შეფასება',
       leaveReview: 'დატოვეთ შეფასება',
       leaveTripAdvisorReview: 'შეაფასეთ TripAdvisor-ზე',
@@ -958,7 +1038,7 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     },
   };
 
-  constructor(private route: ActivatedRoute, private api: ApiService) {}
+  constructor(private route: ActivatedRoute, private api: ApiService) { }
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
@@ -1011,7 +1091,7 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     if (element) {
       this.isManualScrolling = true;
       this.activeCategoryId = menuId;
-      
+
       const headerOffset = 100; // Offset for sticky header
       const elementPosition = element.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
@@ -1035,25 +1115,52 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       if (this.isManualScrolling) return;
 
       entries.forEach(entry => {
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.1) {
-          this.activeCategoryId = entry.target.id.replace('category-', '');
-          
-          // Auto-scroll the chips bar to keep active chip visible
-          const activeLink = document.querySelector(`.category-nav__link--active`);
-          if (activeLink) {
-            activeLink.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-          }
+        const id = entry.target.id.replace('category-', '');
+        if (entry.isIntersecting) {
+          this.visibleCategoryIds.add(id);
+        } else {
+          this.visibleCategoryIds.delete(id);
         }
       });
+
+      if (this.visibleCategoryIds.size > 0) {
+        const activeItem = this.menus.find(m => this.visibleCategoryIds.has(m.id));
+
+        if (activeItem && activeItem.id !== this.activeCategoryId) {
+          this.activeCategoryId = activeItem.id;
+          this.scrollActiveChipIntoView();
+        }
+      }
     }, {
-      rootMargin: '-80px 0px -50% 0px',
-      threshold: [0.1, 0.5]
+      rootMargin: '-110px 0px -75% 0px',
+      threshold: [0, 0.01]
     });
 
     this.menus.forEach(menu => {
       const el = document.getElementById(`category-${menu.id}`);
       if (el) this.observer?.observe(el);
     });
+  }
+
+  private scrollActiveChipIntoView() {
+    setTimeout(() => {
+      const container = document.querySelector('.category-nav__scroll');
+      const activeLink = document.querySelector('.category-nav__link--active') as HTMLElement;
+
+      if (container && activeLink) {
+        const containerWidth = container.clientWidth;
+        const linkLeft = activeLink.offsetLeft;
+        const linkWidth = activeLink.clientWidth;
+
+        // Calculate the scroll position to center the active link
+        const targetScrollLeft = linkLeft - (containerWidth / 2) + (linkWidth / 2);
+
+        container.scrollTo({
+          left: targetScrollLeft,
+          behavior: 'smooth'
+        });
+      }
+    }, 0);
   }
 
   ngAfterViewChecked() {
@@ -1177,8 +1284,8 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       next: () => {
         this.isRequestingBill = false;
         const msg = this.selectedLanguage === 'ka' ? 'ანგარიში მოთხოვილია!' :
-                    this.selectedLanguage === 'ru' ? 'Счет запрошен!' :
-                    'Bill requested!';
+          this.selectedLanguage === 'ru' ? 'Счет запрошен!' :
+            'Bill requested!';
         alert(msg);
       },
       error: (err) => {
@@ -1237,7 +1344,7 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
 
   get filteredMenus() {
     if (!this.searchQuery.trim()) return this.menus;
-    
+
     const query = this.searchQuery.toLowerCase().trim();
     return this.menus.map(menu => {
       const filteredItems = menu.items.filter((item: any) => {

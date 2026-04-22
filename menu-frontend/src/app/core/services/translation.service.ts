@@ -9,7 +9,7 @@ import { ApiService } from './api.service';
   providedIn: 'root'
 })
 export class TranslationService {
-  private currentLanguageSubject = new BehaviorSubject<string>(localStorage.getItem('selectedLanguage') || '');
+  private currentLanguageSubject = new BehaviorSubject<string>(localStorage.getItem('selectedLanguage') || 'ka');
   currentLanguage$ = this.currentLanguageSubject.asObservable();
 
   private activeLanguagesSubject = new BehaviorSubject<string[]>(['ka', 'en', 'ru']);

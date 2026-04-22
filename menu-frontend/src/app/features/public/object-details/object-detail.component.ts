@@ -11,8 +11,20 @@ import { environment } from '../../../../environments/environment';
   imports: [CommonModule, RouterModule],
   template: `
     <div class="detail-container" *ngIf="object">
-      <div class="back-link btn btn-link text-decoration-none p-0 mb-4" routerLink="/">
-        <i class="bi bi-arrow-left me-2"></i>{{ translate('PUBLIC_BACK_TO_VENUES') }}
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="back-link btn btn-link text-decoration-none p-0" routerLink="/">
+          <i class="bi bi-arrow-left me-2"></i>{{ translate('PUBLIC_BACK_TO_VENUES') }}
+        </div>
+        
+        <div class="lang-nav d-flex gap-2">
+          <button *ngFor="let lang of activeLanguages" 
+                  (click)="setLang(lang)"
+                  class="btn btn-sm rounded-pill px-3"
+                  [class.btn-dark]="currentLang === lang"
+                  [class.btn-outline-dark]="currentLang !== lang">
+            {{ getFlag(lang) }} {{ lang.toUpperCase() }}
+          </button>
+        </div>
       </div>
       
       <div class="header-section mb-5">
@@ -94,6 +106,8 @@ import { environment } from '../../../../environments/environment';
     
     .item-thumb { width: 100px; height: 100px; object-fit: cover; }
     
+    .lang-nav button { font-size: 0.75rem; font-weight: 700; border: 2px solid currentColor; }
+    
     @media (max-width: 768px) { 
       .items-grid { grid-template-columns: 1fr; }
       .hero-wrapper { height: 250px; }
@@ -106,10 +120,15 @@ export class ObjectDetailComponent implements OnInit {
   menus: any[] = [];
   selectedMenu: any;
   items: any[] = [];
+  activeLanguages: string[] = [];
+  currentLang: string = 'ka';
 
   constructor(private route: ActivatedRoute, private api: ApiService, private translationService: TranslationService) {}
 
   ngOnInit() {
+    this.translationService.activeLanguages$.subscribe(langs => this.activeLanguages = langs);
+    this.translationService.currentLanguage$.subscribe(lang => this.currentLang = lang);
+
     const id = this.route.snapshot.paramMap.get('id');
     this.api.get(`/public/objects/${id}`).subscribe(res => {
       this.object = res.data;
@@ -139,5 +158,14 @@ export class ObjectDetailComponent implements OnInit {
     this.api.get(`/public/menus/${menu.id}/items`).subscribe(res => {
       this.items = res.data;
     });
+  }
+
+  setLang(lang: string) {
+    this.translationService.setLanguage(lang);
+  }
+
+  getFlag(lang: string): string {
+    const flags: any = { ka: '🇬🇪', en: '🇺🇸', ru: '🇷🇺' };
+    return flags[lang] || '';
   }
 }
