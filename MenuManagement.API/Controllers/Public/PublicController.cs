@@ -51,6 +51,13 @@ namespace MenuManagement.API.Controllers.Public
             return Ok(await Mediator.Send(command));
         }
 
+        [HttpPost("objects/{objectId}/bill")]
+        public async Task<IActionResult> RequestBill(Guid objectId, [FromBody] RequestBillCommand command)
+        {
+            command.ObjectId = objectId;
+            return Ok(await Mediator.Send(command));
+        }
+
         [HttpGet("languages")]
         public async Task<IActionResult> GetActiveLanguages()
         {

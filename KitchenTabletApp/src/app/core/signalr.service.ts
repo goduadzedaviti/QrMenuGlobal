@@ -9,6 +9,7 @@ export class SignalrService {
   private hubConnection?: signalR.HubConnection;
   private listeners = new Set<(event: { type: 'created' | 'updated'; order: KitchenOrder }) => void>();
   private waiterListeners = new Set<(event: { tableLabel: string; calledAtUtc: string }) => void>();
+  private billListeners = new Set<(event: { tableLabel: string; requestedAtUtc: string }) => void>();
 
   async connect(deviceId: string, restaurantId: string): Promise<void> {
     if (this.hubConnection) {
@@ -32,6 +33,10 @@ export class SignalrService {
       this.waiterListeners.forEach(listener => listener(payload));
     });
 
+    this.hubConnection.on('BillRequested', (payload: { tableLabel: string; requestedAtUtc: string }) => {
+      this.billListeners.forEach(listener => listener(payload));
+    });
+
     this.hubConnection.onreconnected(async () => {
       this.connected.set(true);
       await this.hubConnection?.invoke('RegisterDevice', deviceId, restaurantId);
@@ -50,5 +55,10 @@ export class SignalrService {
   onWaiterCalled(listener: (event: { tableLabel: string; calledAtUtc: string }) => void): () => void {
     this.waiterListeners.add(listener);
     return () => this.waiterListeners.delete(listener);
+  }
+
+  onBillRequested(listener: (event: { tableLabel: string; requestedAtUtc: string }) => void): () => void {
+    this.billListeners.add(listener);
+    return () => this.billListeners.delete(listener);
   }
 }

@@ -175,6 +175,34 @@ h2 {
   background: #ef4444 !important; /* Slightly lighter on hover */
 }
 
+.bill-alert {
+  background-color: #f59e0b !important;
+  animation: flash-yellow 0.8s infinite alternate !important;
+}
+
+@keyframes flash-yellow {
+  from { background-color: #f59e0b; }
+  to { background-color: #d97706; }
+}
+
+.bill-card {
+  background: #f59e0b !important;
+  border-color: #d97706 !important;
+  color: white !important;
+}
+
+.bill-card .order-number,
+.bill-card h2,
+.bill-card p,
+.bill-card .items-total,
+.bill-card time {
+  color: white !important;
+}
+
+.bill-card:hover {
+  background: #fbbf24 !important;
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 600px) {
   .queue-shell {
