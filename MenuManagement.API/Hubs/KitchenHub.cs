@@ -9,6 +9,7 @@ namespace MenuManagement.API.Hubs
         Task OrderCreated(object payload);
         Task OrderUpdated(object payload);
         Task WaiterCalled(object payload);
+        Task BillRequested(object payload);
     }
 
     public class KitchenHub : Hub<IKitchenClient>

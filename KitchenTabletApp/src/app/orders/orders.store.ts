@@ -15,6 +15,8 @@ export class OrdersStore {
   readonly newOrderAlert = signal<KitchenOrder | null>(null);
   readonly waiterCallAlert = signal<{ tableLabel: string; calledAtUtc: string } | null>(null);
   readonly waiterCalls = signal<{ tableLabel: string; calledAtUtc: string }[]>([]);
+  readonly billRequestedAlert = signal<{ tableLabel: string; requestedAtUtc: string } | null>(null);
+  readonly billRequests = signal<{ tableLabel: string; requestedAtUtc: string }[]>([]);
   readonly viewedOrderIds = signal<Set<string>>(new Set<string>(JSON.parse(localStorage.getItem('viewedOrders') || '[]')));
   readonly pendingCount = computed(() => this.orders().filter(order => order.status !== 'Ready').length);
   private initialized = false;
@@ -23,10 +25,15 @@ export class OrdersStore {
   dismissAlert(): void {
     this.newOrderAlert.set(null);
     this.waiterCallAlert.set(null);
+    this.billRequestedAlert.set(null);
   }
 
   dismissWaiterCall(tableLabel: string): void {
     this.waiterCalls.update(calls => calls.filter(c => c.tableLabel !== tableLabel));
+  }
+
+  dismissBillRequest(tableLabel: string): void {
+    this.billRequests.update(requests => requests.filter(r => r.tableLabel !== tableLabel));
   }
 
   markAsViewed(orderId: string): void {
@@ -77,6 +84,14 @@ export class OrdersStore {
           this.ngZone.run(() => {
             this.waiterCallAlert.set(payload);
             this.waiterCalls.update(calls => [payload, ...calls.filter(c => c.tableLabel !== payload.tableLabel)]);
+          });
+        });
+
+        this.signalr.onBillRequested(payload => {
+          console.log('SignalR BillRequested payload:', payload);
+          this.ngZone.run(() => {
+            this.billRequestedAlert.set(payload);
+            this.billRequests.update(requests => [payload, ...requests.filter(r => r.tableLabel !== payload.tableLabel)]);
           });
         });
       } catch {

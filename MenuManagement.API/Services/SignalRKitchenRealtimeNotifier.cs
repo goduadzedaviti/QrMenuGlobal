@@ -28,5 +28,10 @@ namespace MenuManagement.API.Services
         {
             await _hubContext.Clients.Group(KitchenHub.GetGroupName(objectId)).WaiterCalled(new { tableLabel, calledAtUtc = DateTime.UtcNow });
         }
+
+        public async Task NotifyBillRequestedAsync(Guid objectId, string tableLabel, CancellationToken cancellationToken)
+        {
+            await _hubContext.Clients.Group(KitchenHub.GetGroupName(objectId)).BillRequested(new { tableLabel, requestedAtUtc = DateTime.UtcNow });
+        }
     }
 }

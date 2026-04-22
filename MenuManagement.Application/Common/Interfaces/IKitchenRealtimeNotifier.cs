@@ -10,5 +10,6 @@ namespace MenuManagement.Application.Common.Interfaces
         Task NotifyOrderCreatedAsync(Guid objectId, KitchenOrderDto order, CancellationToken cancellationToken);
         Task NotifyOrderUpdatedAsync(Guid objectId, KitchenOrderDto order, CancellationToken cancellationToken);
         Task NotifyWaiterCalledAsync(Guid objectId, string tableLabel, CancellationToken cancellationToken);
+        Task NotifyBillRequestedAsync(Guid objectId, string tableLabel, CancellationToken cancellationToken);
     }
 }

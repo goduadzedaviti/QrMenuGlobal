@@ -38,11 +38,11 @@ interface CartItem {
 
           <h1>{{ getDisplayName(object) }}</h1>
           <p *ngIf="getDisplayAddress(object)">{{ getDisplayAddress(object) }}</p>
-          <p *ngIf="getDisplayDescription(object)" class="hero__description">{{ getDisplayDescription(object) }}</p>
         </div>
       </header>
 
       <main class="content">
+        <!-- Step 1: Language Choice -->
         <section *ngIf="activeLanguages.length > 0 && !selectedLanguage" class="panel">
           <div class="section-tag">Step 1</div>
           <h2>{{ t('chooseLanguage') }}</h2>
@@ -54,751 +54,793 @@ interface CartItem {
           </div>
         </section>
 
+        <!-- Step 2: Unified Menu with ScrollSpy -->
         <ng-container *ngIf="selectedLanguage || activeLanguages.length === 0">
           <div class="global-actions" *ngIf="selectedLanguage">
-            <button type="button" class="waiter-button" (click)="callWaiter()">
-              {{ t('callWaiter') }}
+            <button type="button" class="waiter-button" (click)="callWaiter()" [disabled]="isCallingWaiter">
+              {{ isCallingWaiter ? t('submitting') : t('callWaiter') }}
+            </button>
+            <button type="button" class="waiter-button bill-button" (click)="requestBill()" [disabled]="isRequestingBill">
+              {{ isRequestingBill ? t('submitting') : t('requestBill') }}
             </button>
           </div>
-          <section class="panel" *ngIf="!selectedMenu">
-            <div class="section-tag">Step 2</div>
-            <h2>{{ t('chooseCategory') }}</h2>
-            <div class="category-grid">
-              <button *ngFor="let menu of menus" type="button" class="category-card" (click)="openCategory(menu)">
-                <img *ngIf="menu.imageUrl" [src]="getFullUrl(menu.imageUrl)" [alt]="getDisplayName(menu)">
-                <div class="category-card__fallback" *ngIf="!menu.imageUrl"></div>
-                <span>{{ getDisplayName(menu) }}</span>
+
+          <!-- Sticky Category Nav -->
+          <nav class="category-nav" *ngIf="menus.length > 0" [class.category-nav--sticky]="isTabsElevated">
+            <div class="category-nav__wrapper">
+              <button type="button" class="search-toggle" (click)="toggleSearch()">
+                <i class="bi" [class.bi-search]="!isSearchOpen" [class.bi-x]="isSearchOpen"></i>
               </button>
-            </div>
-          </section>
+              
+              <div class="search-box" [class.search-box--open]="isSearchOpen">
+                <input 
+                  type="text" 
+                  [(ngModel)]="searchQuery" 
+                  [placeholder]="t('chooseCategory')" 
+                  class="search-input">
+              </div>
 
-          <section *ngIf="selectedMenu" class="panel">
-            <div class="toolbar">
-              <button type="button" class="back-button" (click)="backToCategories()">{{ t('back') }}</button>
-              <div class="toolbar__status">{{ cartItemCount }} {{ t('itemsCount') }}</div>
-            </div>
-
-            <div class="category-hero">
-              <img *ngIf="selectedMenu.imageUrl" [src]="getFullUrl(selectedMenu.imageUrl)" [alt]="getDisplayName(selectedMenu)">
-              <div class="category-hero__fallback" *ngIf="!selectedMenu.imageUrl"></div>
-              <div class="category-hero__content">
-                <div class="section-tag">{{ t('category') }}</div>
-                <h2>{{ getDisplayName(selectedMenu) }}</h2>
-                <p *ngIf="getDisplayDescription(selectedMenu)">{{ getDisplayDescription(selectedMenu) }}</p>
+              <div class="category-nav__scroll" *ngIf="!isSearchOpen">
+                <button 
+                  *ngFor="let menu of menus" 
+                  type="button" 
+                  class="category-nav__link"
+                  [class.category-nav__link--active]="activeCategoryId === menu.id"
+                  (click)="scrollToCategory(menu.id)">
+                  {{ getDisplayName(menu) }}
+                </button>
               </div>
             </div>
+          </nav>
 
-            <div class="item-list" *ngIf="items.length > 0; else emptyItems">
-              <article *ngFor="let item of items" class="item-card">
-                <div class="item-card__copy" (click)="openItemDetails(item)">
-                  <h3>{{ getDisplayName(item) }}</h3>
-                  <p *ngIf="getDisplayDescription(item)">{{ getDisplayDescription(item) }}</p>
-                  <span class="price">{{ item.price | currency }}</span>
+          <div class="menu-sections">
+            <section *ngFor="let menu of filteredMenus" [id]="'category-' + menu.id" class="menu-section">
+              <header class="menu-section__header" (click)="toggleCategory(menu.id)">
+                <h2 class="menu-section__title">{{ getDisplayName(menu) }}</h2>
+                <i class="bi bi-chevron-down menu-section__chevron" [class.menu-section__chevron--collapsed]="isCategoryCollapsed(menu.id)"></i>
+              </header>
+              
+              <div class="menu-section__content" [class.menu-section__content--collapsed]="isCategoryCollapsed(menu.id)">
+                <div class="item-grid" *ngIf="menu.items && menu.items.length > 0; else emptyItems">
+                  <article *ngFor="let item of menu.items" class="premium-card">
+                    <div class="premium-card__image-container" (click)="openItemDetails(item)">
+                      <img *ngIf="(!item.showAr || !item.modelUrl) && item.imageUrl" [src]="getFullUrl(item.imageUrl)" [alt]="getDisplayName(item)">
+                      <div class="premium-card__fallback" *ngIf="!item.imageUrl && !item.modelUrl"></div>
+                      
+                      <model-viewer
+                        *ngIf="item.showAr && item.modelUrl"
+                        #cardViewer
+                        [src]="getFullUrl(item.modelUrl)"
+                        class="premium-card__model"
+                        ar
+                        ar-modes="webxr scene-viewer quick-look"
+                        auto-rotate
+                        interaction-prompt="none">
+                      </model-viewer>
+
+                      <button type="button" class="premium-card__add-btn" (click)="addToCart(item); $event.stopPropagation()">
+                        <i class="bi bi-plus"></i>
+                      </button>
+                    </div>
+                    <div class="premium-card__content" (click)="openItemDetails(item)">
+                      <div class="premium-card__price">{{ item.price | currency }}</div>
+                      <h3 class="premium-card__title">{{ getDisplayName(item) }}</h3>
+                      <p class="premium-card__subtitle" *ngIf="getDisplayDescription(item)">{{ getDisplayDescription(item) }}</p>
+                    </div>
+                  </article>
                 </div>
-                <ng-container *ngIf="item.showAr && item.modelUrl">
-                  <model-viewer
-                    #cardViewer
-                    [src]="getFullUrl(item.modelUrl)"
-                    class="item-card__model"
-                    ar
-                    ar-modes="webxr scene-viewer quick-look"
-                    ar-placement="floor"
-                    auto-rotate
-                    camera-controls
-                    interaction-prompt="none"
-                    shadow-intensity="1">
-                  </model-viewer>
-                  <button
-                    type="button"
-                    class="secondary-button mt-1"
-                    (click)="activateAR(cardViewer)">
-                    <i class="bi bi-box me-1"></i> {{ t('viewIn3D') }}
-                  </button>
-                </ng-container>
-                <img *ngIf="(!item.showAr || !item.modelUrl) && item.imageUrl" [src]="getFullUrl(item.imageUrl)" [alt]="getDisplayName(item)">
-                <button type="button" class="item-card__add" (click)="addToCart(item)">
-                  {{ t('addToOrder') }}
-                </button>
-              </article>
+              </div>
+            </section>
+            
+            <div *ngIf="filteredMenus.length === 0" class="empty-state">
+              <p>{{ t('noItems') }}</p>
             </div>
-          </section>
+          </div>
         </ng-container>
 
         <ng-template #emptyItems>
-          <section class="panel empty">
+          <div class="empty-state">
             <p>{{ t('noItems') }}</p>
-          </section>
+          </div>
         </ng-template>
       </main>
 
+      <!-- Portals & Modals same as before -->
       <div class="modal-overlay" *ngIf="selectedItem" (click)="closeItemDetails()">
         <div class="modal-card" (click)="$event.stopPropagation()">
           <button type="button" class="modal-card__close" (click)="closeItemDetails()">×</button>
-          <ng-container *ngIf="selectedItem.showAr && selectedItem.modelUrl">
+          <div class="modal-card__media">
             <model-viewer
+              *ngIf="selectedItem.showAr && selectedItem.modelUrl"
               #itemModelViewer
               [src]="getFullUrl(selectedItem.modelUrl)"
               class="modal-card__model"
               ar
               ar-modes="webxr scene-viewer quick-look"
-              ar-placement="floor"
               auto-rotate
-              camera-controls
-              shadow-intensity="1">
+              camera-controls>
             </model-viewer>
-          </ng-container>
-          <img *ngIf="(!selectedItem.showAr || !selectedItem.modelUrl) && selectedItem.imageUrl" [src]="getFullUrl(selectedItem.imageUrl)" [alt]="getDisplayName(selectedItem)">
+            <img *ngIf="(!selectedItem.showAr || !selectedItem.modelUrl) && selectedItem.imageUrl" [src]="getFullUrl(selectedItem.imageUrl)" [alt]="getDisplayName(selectedItem)">
+          </div>
           <div class="modal-card__body">
-            <h2>{{ getDisplayName(selectedItem) }}</h2>
-            <span class="price">{{ selectedItem.price | currency }}</span>
-            <p>{{ getDisplayDescription(selectedItem) || t('noDescription') }}</p>
-            <button type="button" class="primary-button" (click)="addToCart(selectedItem); closeItemDetails()">
-              {{ t('addToOrder') }}
-            </button>
-            <button
-              type="button"
-              class="secondary-button mt-2"
-              *ngIf="selectedItem.showAr && selectedItem.modelUrl"
-              (click)="activateAR()">
-              <i class="bi bi-box me-2"></i> {{ t('viewIn3D') }}
-            </button>
+            <div class="d-flex justify-content-between align-items-start">
+              <h2>{{ getDisplayName(selectedItem) }}</h2>
+              <span class="price-pill">{{ selectedItem.price | currency }}</span>
+            </div>
+            <p class="modal-description">{{ getDisplayDescription(selectedItem) || t('noDescription') }}</p>
+            <div class="modal-actions">
+              <button type="button" class="primary-button" (click)="addToCart(selectedItem); closeItemDetails()">
+                {{ t('addToOrder') }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
+      <!-- Cart FAB -->
       <button *ngIf="cart.length > 0" type="button" class="cart-fab" (click)="openCart()">
-        <span>{{ cartItemCount }}</span>
-        {{ t('viewOrder') }}
+        <div class="cart-fab__info">
+          <span class="cart-count">{{ cartItemCount }}</span>
+          <span class="cart-total">{{ cartTotal | currency }}</span>
+        </div>
+        <span class="cart-fab__label">{{ t('viewOrder') }}</span>
       </button>
 
-      <div class="modal-overlay" *ngIf="isCartOpen" (click)="closeCart()">
+      <div class="modal-overlay" [class.modal-overlay--bottom]="isCartOpen" *ngIf="isCartOpen" (click)="closeCart()">
         <div class="cart-sheet" (click)="$event.stopPropagation()">
           <div class="cart-sheet__header">
             <div>
               <div class="section-tag">{{ t('yourOrder') }}</div>
               <h3>{{ cartItemCount }} {{ t('itemsCount') }}</h3>
             </div>
-            <button type="button" class="modal-card__close" (click)="closeCart()">×</button>
+            <button type="button" class="close-btn" (click)="closeCart()">×</button>
           </div>
 
-          <div class="cart-items">
-            <section class="cart-item" *ngFor="let cartItem of cart">
-              <div class="cart-item__top">
-                <strong>{{ getDisplayName(cartItem.item) }}</strong>
-                <span>{{ cartItem.item.price | currency }}</span>
+          <div class="cart-body">
+            <div class="cart-items">
+              <div class="cart-item" *ngFor="let cartItem of cart">
+                <div class="cart-item__info">
+                  <strong>{{ getDisplayName(cartItem.item) || 'Item' }}</strong>
+                  <span>{{ cartItem.item.price | currency }}</span>
+                </div>
+                <div class="cart-item__controls">
+                  <div class="qty-stepper">
+                    <button (click)="changeQuantity(cartItem.menuItemId, -1)">-</button>
+                    <span>{{ cartItem.quantity }}</span>
+                    <button (click)="changeQuantity(cartItem.menuItemId, 1)">+</button>
+                  </div>
+                  <button type="button" class="remove-btn" (click)="removeFromCart(cartItem.menuItemId)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+                <textarea [(ngModel)]="cartItem.notes" rows="1" [placeholder]="t('itemNotesPlaceholder')"></textarea>
               </div>
-              <div class="cart-item__actions">
-                <button type="button" (click)="changeQuantity(cartItem.menuItemId, -1)">-</button>
-                <span>{{ cartItem.quantity }}</span>
-                <button type="button" (click)="changeQuantity(cartItem.menuItemId, 1)">+</button>
-                <button type="button" class="danger-link" (click)="removeFromCart(cartItem.menuItemId)">{{ t('remove') }}</button>
-              </div>
-              <textarea [(ngModel)]="cartItem.notes" rows="2" [placeholder]="t('itemNotesPlaceholder')"></textarea>
-            </section>
+            </div>
           </div>
 
           <div class="order-form">
-            <label *ngIf="!isTableFromUrl">
-              {{ t('tableLabel') }}
-              <input [(ngModel)]="orderForm.tableLabel" [placeholder]="t('tablePlaceholder')">
-            </label>
-            <label>
-              {{ t('customerName') }}
+            <div class="form-group">
+              <label>{{ t('customerName') }}</label>
               <input [(ngModel)]="orderForm.customerName" [placeholder]="t('customerPlaceholder')">
-            </label>
-            <label>
-              {{ t('orderNotes') }}
-              <textarea [(ngModel)]="orderForm.notes" rows="3" [placeholder]="t('orderNotesPlaceholder')"></textarea>
-            </label>
+            </div>
+            <div class="form-group">
+              <label>{{ t('orderNotes') }}</label>
+              <textarea [(ngModel)]="orderForm.notes" rows="2" [placeholder]="t('orderNotesPlaceholder')"></textarea>
+            </div>
           </div>
 
           <div class="cart-footer">
-            <div>
-              <div class="muted">{{ t('total') }}</div>
-              <strong>{{ cartTotal | currency }}</strong>
+            <div class="total-box">
+              <span class="label">{{ t('total') }}</span>
+              <span class="amount">{{ cartTotal | currency }}</span>
             </div>
-            <button type="button" class="primary-button" [disabled]="isSubmittingOrder" (click)="submitOrder()">
+            <button type="button" class="checkout-btn" [disabled]="isSubmittingOrder" (click)="submitOrder()">
               {{ isSubmittingOrder ? t('submitting') : t('placeOrder') }}
             </button>
           </div>
-
-          <p class="feedback feedback--error" *ngIf="orderError">{{ orderError }}</p>
-          <p class="feedback feedback--success" *ngIf="orderSuccess">{{ orderSuccess }}</p>
-        </div>
-      </div>
-
-      <!-- Reviews at the bottom -->
-      <div class="footer-reviews" *ngIf="object.googleReviewUrl || object.tripAdvisorUrl">
-        <div class="section-tag mb-2">{{ t('rateUs') }}</div>
-        <div class="d-flex flex-column align-items-center gap-3">
-          <a *ngIf="object.googleReviewUrl" [href]="object.googleReviewUrl" target="_blank" class="review-button w-100 justify-content-center" style="max-width: 300px;">
-            <img src="https://www.google.com/images/branding/googleg/1x/googleg_standard_color_128dp.png" alt="Google">
-            <span>{{ t('leaveReview') }}</span>
-          </a>
-          <a *ngIf="object.tripAdvisorUrl" [href]="object.tripAdvisorUrl" target="_blank" class="review-button review-button--tripadvisor w-100 justify-content-center" style="max-width: 300px;">
-            <i class="bi bi-tripadvisor fs-5"></i>
-            <span>{{ t('leaveTripAdvisorReview') }}</span>
-          </a>
         </div>
       </div>
     </div>
   `,
   styles: [`
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+    @import url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css');
+
     :host {
       display: block;
       min-height: 100vh;
-      background: linear-gradient(180deg, #fff7f0 0%, #ffffff 34%, #fffdf9 100%);
-      color: #181c25;
-      font-family: "Segoe UI", sans-serif;
+      background: white;
+      color: #0f172a;
+      font-family: 'Outfit', sans-serif;
     }
 
-    .page {
-      min-height: 100vh;
-      padding-bottom: 2rem;
-    }
-
+    /* Hero & Header */
     .hero {
       position: relative;
-      min-height: 300px;
-      overflow: hidden;
-    }
-
-    .hero__image,
-    .hero__overlay {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
+      height: 220px;
     }
 
     .hero__image {
+      width: 100%;
+      height: 100%;
       object-fit: cover;
     }
 
     .hero__overlay {
-      background: linear-gradient(180deg, rgba(13, 16, 24, 0.15) 0%, rgba(13, 16, 24, 0.78) 100%);
-    }
-
-    .hero__content,
-    .content {
-      width: min(100%, 460px);
-      margin: 0 auto;
-      padding: 1rem;
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%);
     }
 
     .hero__content {
-      position: relative;
-      z-index: 1;
-      color: #ffffff;
-      padding-top: 7.5rem;
+      position: absolute;
+      bottom: 1.5rem;
+      left: 1.5rem;
+      color: white;
     }
 
-    .hero__content h1 {
-      margin: 0;
-      font-size: 2.3rem;
-      line-height: 0.95;
-      font-weight: 900;
-      letter-spacing: -0.04em;
-    }
-
-    .hero__content p {
-      margin: 0.8rem 0 0;
-      color: rgba(255, 255, 255, 0.9);
-      line-height: 1.5;
-    }
-
-    .hero__description {
-      max-width: 36ch;
-    }
-
-    .footer-reviews {
-      margin-top: 3rem;
-      padding: 2rem 1rem;
-      text-align: center;
-      background: #fdf6ee;
-      border-top: 1px solid #fee1cc;
-    }
-
-    .review-button {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.8rem 1.6rem;
-      background: white;
-      color: #1a1a1a;
-      text-decoration: none;
-      border-radius: 999px;
-      font-weight: 700;
-      font-size: 1rem;
-      box-shadow: 0 10px 30px rgba(249, 115, 22, 0.15);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 1px solid #fee1cc;
-    }
-
-    .review-button:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 15px 35px rgba(249, 115, 22, 0.25);
-      background: #ffffff;
-      border-color: #f97316;
-    }
-
-    .review-button--tripadvisor {
-      border-color: #34e0a1 !important;
-      color: #000000 !important;
-    }
-
-    .review-button--tripadvisor:hover {
-      box-shadow: 0 15px 35px rgba(52, 224, 161, 0.25) !important;
-      border-color: #00af87 !important;
-    }
-
-    .d-flex { display: flex; }
-    .flex-wrap { flex-wrap: wrap; }
-    .justify-content-center { justify-content: center; }
-    .gap-3 { gap: 1rem; }
-    .fs-5 { font-size: 1.25rem; }
-
-    .review-button img {
-      width: 20px;
-      height: 20px;
-    }
+    .hero__content h1 { margin: 0; font-size: 2rem; font-weight: 800; }
+    .hero__content p { margin: 0.25rem 0 0; opacity: 0.8; font-size: 0.9rem; }
 
     .hero__languages {
       display: flex;
-      flex-wrap: wrap;
-      gap: 0.55rem;
-      margin-bottom: 1rem;
-    }
-
-    .chip,
-    .back-button,
-    .item-card__add,
-    .primary-button,
-    .cart-fab,
-    .category-card,
-    .language-card,
-    .cart-item__actions button {
-      border: 0;
-      cursor: pointer;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
     }
 
     .chip {
-      border-radius: 999px;
-      padding: 0.6rem 0.9rem;
-      background: rgba(255, 255, 255, 0.14);
-      color: #ffffff;
-      font-weight: 700;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 0.3rem 0.8rem;
+      border-radius: 99px;
+      font-size: 0.8rem;
+      font-weight: 600;
     }
 
-    .chip--active {
-      background: #ffffff;
-      color: #151922;
-    }
+    .chip--active { background: white; color: black; }
 
+    /* Content Area */
     .content {
-      display: grid;
-      gap: 1rem;
-      margin-top: -1.5rem;
-      position: relative;
-      z-index: 2;
+      max-width: 600px;
+      margin: 0 auto;
+      padding-bottom: 5rem;
     }
 
     .panel {
-      background: rgba(255, 255, 255, 0.96);
-      border: 1px solid rgba(229, 231, 235, 0.92);
-      border-radius: 24px;
-      padding: 1rem;
-      box-shadow: 0 20px 42px rgba(17, 24, 39, 0.08);
+      padding: 2rem 1.5rem;
+      text-align: center;
     }
 
-    .section-tag,
-    .muted {
-      font-size: 0.78rem;
-      font-weight: 800;
-      letter-spacing: 0.08em;
+    .section-tag {
+      color: #6366f1;
+      font-weight: 700;
       text-transform: uppercase;
-      color: #f97316;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
     }
 
-    .language-grid,
-    .category-grid,
-    .item-list,
-    .cart-items,
-    .order-form {
-      display: grid;
-      gap: 0.85rem;
-      margin-top: 1rem;
+    /* Sticky Nav (Reference Look) */
+    .category-nav {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid #f1f5f9;
+      transition: all 0.3s ease;
     }
 
-    .language-card,
-    .category-card {
-      width: 100%;
-      border-radius: 18px;
-      padding: 1rem;
-      background: #fffaf6;
-      text-align: left;
-    }
-
-    .language-card {
-      display: grid;
-      gap: 0.2rem;
-    }
-
-    .language-card span {
-      color: #6b7280;
-      font-size: 0.9rem;
-    }
-
-    .category-card {
-      position: relative;
-      overflow: hidden;
-      min-height: 120px;
-      padding: 0;
-      color: #ffffff;
-      box-shadow: 0 14px 30px rgba(17, 24, 39, 0.14);
-    }
-
-    .category-card img,
-    .category-card__fallback {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-    }
-
-    .category-card img {
-      object-fit: cover;
-    }
-
-    .category-card__fallback {
-      background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
-    }
-
-    .category-card span {
-      position: relative;
-      z-index: 1;
-      display: block;
-      padding: 2.2rem 1rem 1rem;
-      font-size: 1.2rem;
-      font-weight: 800;
-      text-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
-    }
-
-    .toolbar,
-    .cart-sheet__header,
-    .cart-footer,
-    .cart-item__top,
-    .cart-item__actions {
+    .category-nav__wrapper {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
+      padding: 0.5rem 1rem;
+      gap: 0.5rem;
     }
 
-    .back-button {
-      border-radius: 999px;
-      background: #f3f4f6;
-      color: #1f2937;
-      padding: 0.7rem 1rem;
-      font-weight: 800;
-    }
-
-    .toolbar__status {
-      color: #6b7280;
-      font-weight: 700;
-    }
-
-    .category-hero {
-      position: relative;
-      min-height: 180px;
-      overflow: hidden;
-      border-radius: 22px;
-      margin-top: 1rem;
-      background: linear-gradient(135deg, #111827 0%, #374151 100%);
-      color: #ffffff;
-    }
-
-    .category-hero img,
-    .category-hero__fallback {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-    }
-
-    .category-hero img {
-      object-fit: cover;
-    }
-
-    .category-hero__content {
-      position: relative;
-      z-index: 1;
-      padding: 1rem;
-      min-height: 180px;
+    .search-toggle {
+      background: #f8fafc;
+      border: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
       display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      background: linear-gradient(180deg, rgba(17, 24, 39, 0.08) 0%, rgba(17, 24, 39, 0.8) 100%);
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      cursor: pointer;
+      flex-shrink: 0;
     }
 
-    .item-card {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 0.9rem;
-      align-items: start;
-      border: 1px solid rgba(229, 231, 235, 0.92);
-      border-radius: 20px;
-      padding: 0.95rem;
-      background: #ffffff;
+    .search-box {
+      width: 0;
+      overflow: hidden;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+      opacity: 0;
     }
 
-    .item-card img,
-    .item-card__model {
-      width: 90px;
-      height: 90px;
-      border-radius: 16px;
-      object-fit: cover;
-      grid-row: span 2;
-    }
-
-    .item-card__model {
-      background: #f8f9fa;
-    }
-
-    .item-card__copy h3 {
-      margin: 0;
-      font-size: 1rem;
-      font-weight: 800;
-    }
-
-    .item-card__copy p {
-      margin: 0.45rem 0 0;
-      color: #6b7280;
-      font-size: 0.88rem;
-      line-height: 1.45;
-    }
-
-    .price {
-      display: inline-flex;
-      margin-top: 0.85rem;
-      padding: 0.44rem 0.72rem;
-      border-radius: 999px;
-      background: #fff0e4;
-      color: #f97316;
-      font-weight: 900;
-    }
-
-    .item-card__add,
-    .primary-button {
-      border-radius: 16px;
-      background: #f97316;
-      color: #ffffff;
-      padding: 0.85rem 1rem;
-      font-weight: 800;
-      border: none;
+    .search-box--open {
       width: 100%;
+      opacity: 1;
+    }
+
+    .search-input {
+      width: 100%;
+      background: #f1f5f9;
+      border: 0;
+      padding: 0.6rem 1rem;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 0.95rem;
+    }
+
+    .category-nav__scroll {
+      display: flex;
+      overflow-x: auto;
+      gap: 1.5rem;
+      padding: 0.25rem 0;
+      scrollbar-width: none;
+    }
+    .category-nav__scroll::-webkit-scrollbar { display: none; }
+
+    .category-nav__link {
+      background: transparent;
+      border: 0;
+      padding: 0.5rem 0;
+      color: #71717a;
+      font-weight: 600;
+      font-size: 0.95rem;
+      font-family: inherit;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-bottom: 2px solid transparent;
+    }
+
+    .category-nav__link--active {
+      color: #6366f1;
+      border-bottom-color: #6366f1;
+    }
+
+    /* Menu Sections */
+    .menu-sections {
+      padding: 0 1rem;
+    }
+
+    .menu-section {
+      padding-top: 4rem;
+      margin-top: -3rem;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 1rem;
+    }
+
+    .menu-section:last-child { border-bottom: 0; }
+
+    .menu-section__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 0 1rem;
       cursor: pointer;
     }
 
-    .secondary-button {
-      border-radius: 16px;
-      background: #0d6efd;
-      color: #ffffff;
-      padding: 0.85rem 1rem;
+    .menu-section__title {
+      font-size: 1.25rem;
       font-weight: 800;
-      border: none;
+      margin: 0;
+    }
+
+    .menu-section__chevron {
+      font-size: 1.2rem;
+      color: #94a3b8;
+      transition: transform 0.3s ease;
+    }
+
+    .menu-section__chevron--collapsed {
+      transform: rotate(-90deg);
+      color: #6366f1;
+    }
+
+    .menu-section__content {
+      overflow: hidden;
+      max-height: 2000px; /* High enough to contain items */
+      transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out;
+      opacity: 1;
+    }
+
+    .menu-section__content--collapsed {
+      max-height: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Grid - Exactly 2 Columns */
+    .item-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    /* Premium Card (Reference Look) */
+    .premium-card {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #f1f5f9;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .premium-card__image-container {
+      position: relative;
       width: 100%;
+      aspect-ratio: 1.1 / 1;
+      background: #f8fafc;
     }
 
-    .mt-2 { margin-top: 0.5rem !important; }
-
-    .secondary-button.mt-1 {
-      padding: 0.5rem;
-      font-size: 0.85rem;
-      margin-top: 0.4rem !important;
-      grid-column: 1 / -1;
+    .premium-card__image-container img,
+    .premium-card__model {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
-    .item-card__add {
-      grid-column: 1 / -1;
-    }
-
-    .empty {
-      text-align: center;
-      color: #6b7280;
-    }
-
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 1000;
+    .premium-card__add-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: white;
+      border: 0;
+      color: #6366f1;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 1rem;
-      background: rgba(15, 23, 42, 0.56);
-      backdrop-filter: blur(8px);
-    }
-
-    .modal-card,
-    .cart-sheet {
-      width: min(100%, 430px);
-      max-height: 90vh;
-      overflow: auto;
-      border-radius: 26px;
-      background: #ffffff;
-      box-shadow: 0 24px 50px rgba(15, 23, 42, 0.24);
-    }
-
-    .modal-card {
-      position: relative;
-    }
-
-    .modal-card img,
-    .modal-card__model {
-      width: 100%;
-      height: 240px;
-      object-fit: cover;
-      display: block;
-    }
-
-    .modal-card__model {
-      background: #f8f9fa;
-    }
-
-    .modal-card__body,
-    .cart-sheet {
-      padding: 1rem;
-    }
-
-    .modal-card__close {
-      width: 40px;
-      height: 40px;
-      border: 0;
-      border-radius: 999px;
-      background: #f3f4f6;
-      font-size: 1.45rem;
-      line-height: 1;
-    }
-
-    .cart-sheet h3,
-    .modal-card__body h2 {
-      margin: 0.3rem 0 0;
-      font-size: 1.25rem;
-      font-weight: 900;
-    }
-
-    .cart-fab {
-      position: fixed;
-      right: 1rem;
-      bottom: 1rem;
-      z-index: 60;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.65rem;
-      padding: 0.95rem 1.1rem;
-      border-radius: 999px;
-      background: #121826;
-      color: #ffffff;
-      font-weight: 900;
-      box-shadow: 0 20px 42px rgba(17, 24, 39, 0.26);
-    }
-
-    .cart-fab span {
-      min-width: 32px;
-      height: 32px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 999px;
-      background: #f97316;
-      padding: 0 0.4rem;
-    }
-
-    .cart-item {
-      border: 1px solid rgba(229, 231, 235, 0.92);
-      border-radius: 18px;
-      padding: 0.9rem;
-      display: grid;
-      gap: 0.75rem;
-    }
-
-    .cart-item__actions {
-      justify-content: flex-start;
-      flex-wrap: wrap;
-    }
-
-    .cart-item__actions button {
-      border-radius: 12px;
-      background: #f3f4f6;
-      padding: 0.5rem 0.75rem;
+      font-size: 1.2rem;
       font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
     }
 
-    .danger-link {
-      color: #b42318;
+    .premium-card__content {
+      padding: 0.75rem;
+      flex-grow: 1;
     }
 
-    textarea,
-    input {
-      width: 100%;
-      border: 1px solid #dde3ec;
-      border-radius: 14px;
-      padding: 0.8rem 0.9rem;
-      font: inherit;
-    }
-
-    .order-form label {
-      display: grid;
-      gap: 0.4rem;
-      color: #374151;
-      font-size: 0.9rem;
+    .premium-card__price {
+      color: #6366f1;
       font-weight: 700;
+      font-size: 0.9rem;
+      margin-bottom: 0.25rem;
     }
 
-    .feedback {
-      margin: 0.85rem 0 0;
-      font-weight: 800;
+    .premium-card__title {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #18181b;
+      line-height: 1.3;
     }
 
-    .feedback--error {
-      color: #b42318;
+    .premium-card__subtitle {
+      margin: 0.2rem 0 0;
+      font-size: 0.8rem;
+      color: #71717a;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
-    .feedback--success {
-      color: #027a48;
-    }
-
+    /* Global Actions */
     .global-actions {
       display: flex;
-      justify-content: center;
-      margin-top: 0.5rem;
-      margin-bottom: 1.5rem;
-      position: relative;
-      z-index: 1000;
-      /* removed pointer-events: none to ensure interaction */
+      gap: 0.75rem;
+      padding: 1.5rem 1rem;
     }
 
     .waiter-button {
-      background: #dc2626;
-      color: #ffffff;
-      border: 0;
-      border-radius: 999px;
-      padding: 0.9rem 1.8rem;
-      font-size: 1rem;
-      font-weight: 800;
-      cursor: pointer;
-      box-shadow: 0 20px 42px rgba(17, 24, 39, 0.4);
-      pointer-events: auto;
-      transition: transform 0.2s;
+      flex: 1;
+      background: #fef2f2;
+      color: #ef4444;
+      border: 1px solid #fee2e2;
+      padding: 0.75rem;
+      border-radius: 12px;
+      font-weight: 700;
+      font-family: inherit;
     }
 
-    .waiter-button:active {
-      transform: scale(0.95);
+    /* Cart FAB */
+    .cart-fab {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #18181b;
+      color: white;
+      padding: 0.6rem 1.25rem;
+      border-radius: 99px;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-family: inherit;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.4);
+      z-index: 1000;
+      border: 0;
+      cursor: pointer;
+    }
+
+    .cart-fab__info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 0.25rem 0.75rem;
+      border-radius: 99px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .cart-count { background: #6366f1; padding: 0 0.5rem; border-radius: 6px; font-size: 0.8rem; font-weight: 800; }
+    .cart-total { font-weight: 700; font-size: 0.9rem; }
+    .cart-fab__label { font-weight: 700; font-size: 0.95rem; letter-spacing: -0.01em; }
+    /* Modals & Overlays */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(8px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .modal-overlay--bottom {
+      align-items: flex-end;
+      padding: 0;
+    }
+
+    /* Item Details Modal */
+    .modal-card {
+      width: 100%;
+      max-width: 450px;
+      background: white;
+      border-radius: 24px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-card__media {
+      height: 300px;
+      background: #f8fafc;
+    }
+
+    .modal-card__media img, .modal-card__model {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .modal-card__close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 36px;
+      height: 36px;
+      background: rgba(255,255,255,0.9);
+      border: 0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      z-index: 10;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+
+    .modal-card__body { padding: 2rem; }
+
+    .primary-button {
+      width: 100%;
+      background: #6366f1;
+      color: white;
+      border: 0;
+      padding: 1rem;
+      border-radius: 12px;
+      font-weight: 700;
+      font-family: inherit;
+      margin-top: 1.5rem;
+    }
+
+    /* Cart Sheet (Bottom Sheet) */
+    .cart-sheet {
+      width: 100%;
+      max-width: 500px;
+      background: white;
+      border-radius: 32px 32px 0 0;
+      padding: 2rem;
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 -10px 25px -5px rgba(0,0,0,0.1);
+      animation: slideUp 0.4s cubic-bezier(0, 0.55, 0.45, 1);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .cart-sheet__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .cart-sheet__header h3 { margin: 0; font-size: 1.5rem; font-weight: 800; }
+    
+    .section-tag {
+      background: #eff6ff;
+      color: #3b82f6;
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+      display: inline-block;
+    }
+
+    .close-btn {
+      width: 36px;
+      height: 36px;
+      background: #f1f5f9;
+      border: 0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      font-size: 1.25rem;
+    }
+
+    /* Cart Items */
+    .cart-body {
+      overflow-y: auto;
+      flex-grow: 1;
+      margin: 0 -1rem; /* Negative margin to let content breathe but scrollbar be on edge if needed */
+      padding: 0 1rem;
+    }
+
+    .cart-item {
+      padding: 1.25rem 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .cart-item:last-child { border-bottom: 0; }
+
+    .cart-item__info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .cart-item__info strong { font-size: 1.1rem; font-weight: 700; color: #1e293b; }
+    .cart-item__info span { color: #6366f1; font-weight: 800; }
+
+    .cart-item__controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .qty-stepper {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      background: #f8fafc;
+      padding: 0.4rem 0.8rem;
+      border-radius: 99px;
+    }
+
+    .qty-stepper button {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 0;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      color: #1e293b;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .qty-stepper span { font-weight: 800; min-width: 20px; text-align: center; }
+
+    .remove-btn {
+      background: #fef2f2;
+      color: #ef4444;
+      border: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    textarea {
+      width: 100%;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 0.75rem;
+      margin-top: 0.75rem;
+      font-family: inherit;
+      font-size: 0.9rem;
+      resize: none;
+    }
+
+    /* Order Form */
+    .order-form {
+      padding: 1.5rem 0;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    .form-group { margin-bottom: 1.25rem; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 700; color: #64748b; margin-bottom: 0.5rem; }
+    .form-group input {
+      width: 100%;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 0.85rem;
+      font-family: inherit;
+    }
+
+    /* Cart Footer */
+    .total-box {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .total-box .label { font-size: 1.1rem; font-weight: 600; color: #64748b; }
+    .total-box .amount { font-size: 1.75rem; font-weight: 800; color: #1e293b; }
+
+    .checkout-btn {
+      width: 100%;
+      background: #18181b;
+      color: white;
+      padding: 1.25rem;
+      border: 0;
+      border-radius: 16px;
+      font-weight: 800;
+      font-size: 1.1rem;
+      cursor: pointer;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     }
   `]
 })
 export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
+  isCallingWaiter = false;
+  isRequestingBill = false;
+  isTabsElevated = false;
+  activeCategoryId: string | null = null;
+  private observer?: IntersectionObserver;
+  private isManualScrolling = false;
+  collapsedCategories: Set<string> = new Set();
   object: any;
   menus: any[] = [];
   selectedMenu: any;
@@ -809,10 +851,11 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   cart: CartItem[] = [];
   isCartOpen = false;
   isSubmittingOrder = false;
+  searchQuery = '';
+  isSearchOpen = false;
   orderError = '';
   orderSuccess = '';
   apiUrl = environment.baseUrl;
-  isTabsElevated = false;
 
   @ViewChild('itemModelViewer') itemModelViewer!: ElementRef;
   orderForm = {
@@ -824,7 +867,7 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private readonly uiText: Record<LanguageCode, Record<string, string>> = {
     ka: {
-      chooseLanguage: 'Choose your language',
+      chooseLanguage: 'აირჩიე ენა',
       chooseCategory: 'აირჩიე კატეგორია',
       category: 'კატეგორია',
       noItems: 'ამ კატეგორიაში კერძები ჯერ არ არის დამატებული.',
@@ -847,6 +890,7 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       orderPlaced: 'შეკვეთა გაიგზავნა სამზარეულოში',
       back: 'უკან',
       callWaiter: 'მიმტანის გამოძახება',
+      requestBill: 'ანგარიშის მოთხოვნა',
       rateUs: 'მოგვეცით შეფასება',
       leaveReview: 'დატოვეთ შეფასება',
       leaveTripAdvisorReview: 'შეაფასეთ TripAdvisor-ზე',
@@ -876,6 +920,7 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       orderPlaced: 'Order sent to the kitchen',
       back: 'Back',
       callWaiter: 'Call Waiter',
+      requestBill: 'Request Bill',
       rateUs: 'Rate Us',
       leaveReview: 'Leave a Review',
       leaveTripAdvisorReview: 'Review on TripAdvisor',
@@ -905,16 +950,13 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       orderPlaced: 'Заказ отправлен на кухню',
       back: 'Назад',
       callWaiter: 'Позвать официанта',
+      requestBill: 'Заказать счет',
       rateUs: 'Оцените нас',
       leaveReview: 'Оставить отзыв',
       leaveTripAdvisorReview: 'Отзыв на TripAdvisor',
       viewIn3D: 'Посмотреть в 3D'
     },
   };
-
-  isCallingWaiter = false;
-  callWaiterSuccess = '';
-  callWaiterError = '';
 
   constructor(private route: ActivatedRoute, private api: ApiService) {}
 
@@ -942,6 +984,12 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.api.get(`/public/objects/${id}/menus`).subscribe(res => {
       this.menus = res.resultData;
+      // Fetch all items for all menus immediately to support single-page scroll
+      this.menus.forEach(menu => {
+        this.api.get(`/public/menus/${menu.id}/items`).subscribe(itemRes => {
+          menu.items = itemRes.resultData;
+        });
+      });
     });
   }
 
@@ -951,22 +999,68 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy() {
     document.body.style.overflow = '';
+    this.observer?.disconnect();
   }
 
   selectLanguage(language: LanguageCode) {
     this.selectedLanguage = language;
   }
 
-  openCategory(menu: any) {
-    this.selectedMenu = menu;
-    this.api.get(`/public/menus/${menu.id}/items`).subscribe(res => {
-      this.items = res.resultData;
+  scrollToCategory(menuId: string) {
+    const element = document.getElementById(`category-${menuId}`);
+    if (element) {
+      this.isManualScrolling = true;
+      this.activeCategoryId = menuId;
+      
+      const headerOffset = 100; // Offset for sticky header
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+
+      // Reset manual scrolling flag after animation
+      setTimeout(() => {
+        this.isManualScrolling = false;
+      }, 1000);
+    }
+  }
+
+  private initScrollSpy() {
+    if (this.observer) this.observer.disconnect();
+
+    this.observer = new IntersectionObserver((entries) => {
+      if (this.isManualScrolling) return;
+
+      entries.forEach(entry => {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.1) {
+          this.activeCategoryId = entry.target.id.replace('category-', '');
+          
+          // Auto-scroll the chips bar to keep active chip visible
+          const activeLink = document.querySelector(`.category-nav__link--active`);
+          if (activeLink) {
+            activeLink.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          }
+        }
+      });
+    }, {
+      rootMargin: '-80px 0px -50% 0px',
+      threshold: [0.1, 0.5]
+    });
+
+    this.menus.forEach(menu => {
+      const el = document.getElementById(`category-${menu.id}`);
+      if (el) this.observer?.observe(el);
     });
   }
 
-  backToCategories() {
-    this.selectedMenu = null;
-    this.items = [];
+  ngAfterViewChecked() {
+    // Re-init observer if menus are loaded and observer is not set
+    if (this.menus.length > 0 && !this.observer && this.selectedLanguage) {
+      this.initScrollSpy();
+    }
   }
 
   openItemDetails(item: any) {
@@ -1022,11 +1116,10 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   callWaiter() {
-    if (!this.object?.id) {
-      return;
-    }
+    if (!this.object?.id) return;
 
-    if (!this.orderForm.tableLabel.trim()) {
+    const tableLabel = this.orderForm.tableLabel.trim();
+    if (!tableLabel) {
       const label = prompt(this.t('tableLabel'));
       if (!label || !label.trim()) return;
       this.orderForm.tableLabel = label.trim();
@@ -1038,14 +1131,60 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     }).subscribe({
       next: () => {
         this.isCallingWaiter = false;
-        const msg = this.selectedLanguage === 'ka' ? 'მიმტანი გამოძახებულია!' :
-                    this.selectedLanguage === 'ru' ? 'Официант вызван!' :
-                    'Waiter called!';
+        alert(this.t('waiterCalledSuccess') || 'Waiter called!');
+      },
+      error: (err) => {
+        this.isCallingWaiter = false;
+        alert('Error: ' + (err.message || 'Check connection'));
+      }
+    });
+  }
+
+  toggleSearch() {
+    this.isSearchOpen = !this.isSearchOpen;
+    if (!this.isSearchOpen) {
+      this.searchQuery = '';
+    }
+  }
+
+  toggleCategory(menuId: string) {
+    if (this.collapsedCategories.has(menuId)) {
+      this.collapsedCategories.delete(menuId);
+    } else {
+      this.collapsedCategories.add(menuId);
+    }
+  }
+
+  isCategoryCollapsed(menuId: string): boolean {
+    return this.collapsedCategories.has(menuId);
+  }
+
+  requestBill() {
+    if (!this.object?.id) {
+      return;
+    }
+
+    if (!this.orderForm.tableLabel.trim()) {
+      const label = prompt(this.t('tableLabel'));
+      if (!label || !label.trim()) return;
+      this.orderForm.tableLabel = label.trim();
+    }
+
+    this.isRequestingBill = true;
+    this.api.post(`/public/objects/${this.object.id}/bill`, {
+      tableLabel: this.orderForm.tableLabel
+    }).subscribe({
+      next: () => {
+        this.isRequestingBill = false;
+        const msg = this.selectedLanguage === 'ka' ? 'ანგარიში მოთხოვილია!' :
+                    this.selectedLanguage === 'ru' ? 'Счет запрошен!' :
+                    'Bill requested!';
         alert(msg);
       },
-      error: () => {
-        this.isCallingWaiter = false;
-        alert('Error calling waiter.');
+      error: (err) => {
+        this.isRequestingBill = false;
+        alert('Error requesting bill: ' + (err.message || JSON.stringify(err)));
+        console.error('Bill Request Error:', err);
       }
     });
   }
@@ -1094,6 +1233,20 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
 
   get cartItemCount(): number {
     return this.cart.reduce((sum, item) => sum + item.quantity, 0);
+  }
+
+  get filteredMenus() {
+    if (!this.searchQuery.trim()) return this.menus;
+    
+    const query = this.searchQuery.toLowerCase().trim();
+    return this.menus.map(menu => {
+      const filteredItems = menu.items.filter((item: any) => {
+        const name = this.getDisplayName(item).toLowerCase();
+        const desc = this.getDisplayDescription(item).toLowerCase();
+        return name.includes(query) || desc.includes(query);
+      });
+      return { ...menu, items: filteredItems };
+    }).filter(menu => menu.items.length > 0);
   }
 
   get cartTotal(): number {
@@ -1158,9 +1311,9 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       return '';
     }
 
-    const defaultValue = entity[this.lowercaseFirst(baseKey)] ?? '';
+    const defaultValue = entity[this.lowercaseFirst(baseKey)] ?? entity[baseKey] ?? '';
     const languageKey = this.getLanguageKey(baseKey);
-    const localizedValue = languageKey ? entity[languageKey] : '';
+    const localizedValue = languageKey ? (entity[languageKey] || entity[this.lowercaseFirst(languageKey as string)]) : '';
 
     return localizedValue || defaultValue || '';
   }
