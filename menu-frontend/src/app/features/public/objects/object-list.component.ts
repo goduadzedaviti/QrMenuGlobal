@@ -93,7 +93,7 @@ export class ObjectListComponent implements OnInit {
 
   ngOnInit() {
     this.api.get('/public/objects').subscribe(res => {
-      this.objects = res.data.items;
+      this.objects = res.resultData?.data || [];
     });
   }
 

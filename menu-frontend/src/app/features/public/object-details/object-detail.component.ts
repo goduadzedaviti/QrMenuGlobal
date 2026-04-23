@@ -4,11 +4,13 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 import { TranslationService } from '../../../core/services/translation.service';
 import { environment } from '../../../../environments/environment';
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 
 @Component({
   selector: 'app-object-detail',
   standalone: true,
   imports: [CommonModule, RouterModule],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     <div class="detail-container" *ngIf="object">
       <div class="d-flex justify-content-between align-items-center mb-4">
@@ -55,19 +57,22 @@ import { environment } from '../../../../environments/environment';
           </div>
         </div>
 
-        <div class="items-grid" *ngIf="items.length > 0; else noItems">
-          <div class="item-card glass-card p-3 rounded-4" *ngFor="let item of items">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <h4 class="mb-0 fw-bold">{{ translateField(item, 'Name') }}</h4>
-              <span class="badge bg-primary rounded-pill px-3">{{ item.price | currency }}</span>
+        <div class="menu-items-list" *ngIf="items.length > 0; else noItems">
+          <div class="menu-item-row" 
+               *ngFor="let item of items"
+               (click)="selectedItem = item">
+            <div class="menu-item-content">
+              <div class="d-flex justify-content-between align-items-start mb-1">
+                <h4 class="item-title mb-0">{{ translateField(item, 'Name') }}</h4>
+                <span class="item-price">{{ item.price | currency }}</span>
+              </div>
+              <p class="item-description text-muted small mb-2">{{ translateField(item, 'Description') }}</p>
+              <div class="item-badges" *ngIf="item.modelUrl">
+                <span class="badge-3d"><i class="bi bi-view-stacked me-1"></i> 3D View</span>
+              </div>
             </div>
-            <div class="d-flex gap-3">
-              <div class="flex-grow-1">
-                <p class="text-muted small mb-0">{{ translateField(item, 'Description') }}</p>
-              </div>
-              <div class="flex-shrink-0" *ngIf="item.imageUrl">
-                <img [src]="getFullUrl(item.imageUrl)" class="item-thumb rounded-3 shadow-sm">
-              </div>
+            <div class="menu-item-media" *ngIf="item.imageUrl">
+              <img [src]="getFullUrl(item.imageUrl)" class="item-thumb">
             </div>
           </div>
         </div>
@@ -77,6 +82,58 @@ import { environment } from '../../../../environments/environment';
             <p class="text-muted mt-3">{{ translate('PUBLIC_SELECT_CATEGORY') }}</p>
           </div>
         </ng-template>
+      </div>
+
+      <!-- Detailed Item View Overlay -->
+      <div class="item-details-overlay" *ngIf="selectedItem" (click)="selectedItem = null">
+        <div class="item-details-card glass-card rounded-5 p-4 animate-slide-up" (click)="$event.stopPropagation()">
+          <button class="btn-close-custom" (click)="selectedItem = null">
+            <i class="bi bi-x-lg"></i>
+          </button>
+          
+          <div class="row g-4">
+            <div class="col-md-6">
+              <div class="media-container rounded-4 overflow-hidden bg-light shadow-inner position-relative">
+                <model-viewer 
+                  *ngIf="selectedItem.modelUrl"
+                  [src]="getFullUrl(selectedItem.modelUrl)" 
+                  camera-controls
+                  auto-rotate
+                  touch-action="pan-y"
+                  camera-orbit="0deg 0deg 105%"
+                  ar
+                  ar-modes="webxr scene-viewer quick-look"
+                  class="w-100 h-100"
+                  style="min-height: 350px; background: #f8f9fa;">
+                </model-viewer>
+                <img *ngIf="!selectedItem.modelUrl && selectedItem.imageUrl" 
+                     [src]="getFullUrl(selectedItem.imageUrl)" 
+                     class="detail-main-img w-100 h-100 object-fit-cover">
+                <div *ngIf="!selectedItem.modelUrl && !selectedItem.imageUrl" class="no-media py-5 text-center d-flex align-items-center justify-content-center" style="height: 350px;">
+                  <i class="bi bi-image text-secondary opacity-25 display-1"></i>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6 d-flex flex-column justify-content-center py-3">
+              <div class="mb-4">
+                <h2 class="display-6 fw-bold mb-2">{{ translateField(selectedItem, 'Name') }}</h2>
+                <div class="badge bg-primary-soft text-primary rounded-pill px-3 py-2 mb-3">
+                  {{ selectedItem.price | currency }}
+                </div>
+                <p class="lead text-muted">{{ translateField(selectedItem, 'Description') }}</p>
+              </div>
+              
+              <div class="mt-auto d-flex gap-3">
+                <button class="btn btn-primary btn-lg rounded-pill flex-grow-1 py-3 shadow-lg fw-bold">
+                  {{ translate('PUBLIC_ADD_TO_CART') || 'კალათაში დამატება' }}
+                </button>
+                <button *ngIf="selectedItem.modelUrl" class="btn btn-outline-primary btn-lg rounded-circle p-0 d-flex align-items-center justify-content-center" style="width: 56px; height: 56px;">
+                  <i class="bi bi-view-stacked"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   `,
@@ -90,28 +147,136 @@ import { environment } from '../../../../environments/environment';
     
     .transition-all { transition: all 0.3s ease; }
     
-    .items-grid { 
-      display: grid; 
-      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); 
-      gap: 1.5rem; 
+    .menu-items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
     }
     
-    .glass-card {
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(0,0,0,0.05);
+    .menu-item-row {
+      display: flex;
+      padding: 1.25rem 0;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    
+    .menu-item-row:hover {
+      background-color: #fafafa;
+    }
+    
+    .menu-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .item-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+    
+    .item-price {
+      font-weight: 700;
+      color: #0d6efd;
+      font-size: 1.1rem;
+      margin-left: 1rem;
+    }
+    
+    .item-description {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.5;
+    }
+    
+    .menu-item-media {
+      flex-shrink: 0;
+    }
+    
+    .item-thumb {
+      width: 110px;
+      height: 110px;
+      object-fit: cover;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    
+    .badge-3d {
+      background: #e7f1ff;
+      color: #0d6efd;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+    }
+    
+    /* Overlay & Detail View */
+    .item-details-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(8px);
+      z-index: 1050;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    
+    .item-details-card {
+      width: 100%;
+      max-width: 800px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      background: white;
+      border-radius: 30px !important;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+    
+    .btn-close-custom {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255,255,255,0.9);
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      z-index: 10;
       transition: transform 0.2s;
     }
-    .glass-card:hover { transform: scale(1.02); }
+    .btn-close-custom:hover { transform: scale(1.1); }
     
-    .item-thumb { width: 100px; height: 100px; object-fit: cover; }
+    .media-container { 
+      min-height: 350px;
+      background: #fcfcfc;
+      border-radius: 20px;
+    }
     
-    .lang-nav button { font-size: 0.75rem; font-weight: 700; border: 2px solid currentColor; }
+    .animate-slide-up {
+      animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    @keyframes slideUp {
+      from { transform: translateY(40px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
     
     @media (max-width: 768px) { 
-      .items-grid { grid-template-columns: 1fr; }
+      .item-thumb { width: 90px; height: 90px; }
+      .item-title { font-size: 1.05rem; }
       .hero-wrapper { height: 250px; }
-      .display-4 { font-size: 2.5rem; }
     }
   `]
 })
@@ -120,6 +285,7 @@ export class ObjectDetailComponent implements OnInit {
   menus: any[] = [];
   selectedMenu: any;
   items: any[] = [];
+  selectedItem: any = null;
   activeLanguages: string[] = [];
   currentLang: string = 'ka';
 
@@ -131,10 +297,10 @@ export class ObjectDetailComponent implements OnInit {
 
     const id = this.route.snapshot.paramMap.get('id');
     this.api.get(`/public/objects/${id}`).subscribe(res => {
-      this.object = res.data;
+      this.object = res.resultData;
     });
     this.api.get(`/public/objects/${id}/menus`).subscribe(res => {
-      this.menus = res.data;
+      this.menus = res.resultData || [];
       if (this.menus.length > 0) this.selectMenu(this.menus[0]);
     });
   }
@@ -156,7 +322,13 @@ export class ObjectDetailComponent implements OnInit {
   selectMenu(menu: any) {
     this.selectedMenu = menu;
     this.api.get(`/public/menus/${menu.id}/items`).subscribe(res => {
-      this.items = res.data;
+      const itemsData = res.resultData || [];
+      this.items = itemsData.sort((a: any, b: any) => {
+        // Prioritize items with images
+        if (a.imageUrl && !b.imageUrl) return -1;
+        if (!a.imageUrl && b.imageUrl) return 1;
+        return 0;
+      });
     });
   }
 

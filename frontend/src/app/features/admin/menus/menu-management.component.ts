@@ -149,7 +149,7 @@ import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-
                 <div class="col-md-5 mt-3 mt-md-0 border-start ps-md-4">
                   <label class="form-label fw-bold small text-uppercase text-muted d-block">{{ translate('VENUE_PHOTO_LABEL') }}</label>
                   
-                  <div class="image-upload-container text-center p-3 border-2 border-dashed rounded-4 bg-light mb-3" 
+                  <div class="image-upload-container text-start p-3 border-2 border-dashed rounded-4 bg-light mb-3" 
                        style="border-style: dashed !important; border-color: #dee2e6 !important;">
                     <div *ngIf="!editingMenu.imageUrl && !isUploading" (click)="fileInput.click()" style="cursor: pointer;">
                       <i class="bi bi-cloud-arrow-up display-4 text-muted"></i>
@@ -160,10 +160,15 @@ import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-
                       <div class="spinner-border text-primary" role="status"></div>
                     </div>
 
-                    <div *ngIf="editingMenu.imageUrl && !isUploading">
-                      <img [src]="getFullUrl(editingMenu.imageUrl)" class="img-fluid rounded-3 shadow-sm mb-2 max-h-150">
-                      <div class="mt-2">
-                         <button class="btn btn-sm btn-outline-primary rounded-pill px-3" (click)="fileInput.click()">{{ translate('BUTTON_EDIT') }}</button>
+                    <div *ngIf="editingMenu.imageUrl && !isUploading" class="d-inline-block text-start">
+                      <img [src]="getFullUrl(editingMenu.imageUrl)" class="img-fluid rounded-3 shadow-sm mb-2 max-h-150 d-block">
+                      <div class="mt-2 d-flex justify-content-between align-items-center">
+                         <button class="btn btn-sm btn-outline-primary rounded-pill px-3" (click)="fileInput.click()">
+                           <i class="bi bi-pencil-square me-1"></i> {{ translate('BUTTON_EDIT') }}
+                         </button>
+                         <button class="btn btn-sm btn-outline-danger rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" (click)="editingMenu.imageUrl = null" title="Remove Image">
+                           <i class="bi bi-trash m-0"></i>
+                         </button>
                       </div>
                     </div>
                     

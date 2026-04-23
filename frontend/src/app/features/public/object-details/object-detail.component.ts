@@ -93,11 +93,12 @@ interface CartItem {
                 <div class="item-grid" *ngIf="menu.items && menu.items.length > 0; else emptyItems">
                   <article *ngFor="let item of menu.items" class="premium-card">
                     <div class="premium-card__image-container" (click)="openItemDetails(item)">
-                      <img *ngIf="(!item.showAr || !item.modelUrl) && item.imageUrl" [src]="getFullUrl(item.imageUrl)" [alt]="getDisplayName(item)">
-                      <div class="premium-card__fallback" *ngIf="!item.imageUrl && !item.modelUrl"></div>
+                      <!-- Prioritize Image if exists -->
+                      <img *ngIf="item.imageUrl" [src]="getFullUrl(item.imageUrl)" [alt]="getDisplayName(item)">
                       
+                      <!-- Show 3D Model only if no Image and Model exists -->
                       <model-viewer
-                        *ngIf="item.showAr && item.modelUrl"
+                        *ngIf="!item.imageUrl && item.showAr && item.modelUrl"
                         #cardViewer
                         [src]="getFullUrl(item.modelUrl)"
                         class="premium-card__model"
@@ -108,6 +109,8 @@ interface CartItem {
                         touch-action="pan-y"
                         interaction-prompt="none">
                       </model-viewer>
+
+                      <div class="premium-card__fallback" *ngIf="!item.imageUrl && (!item.showAr || !item.modelUrl)"></div>
 
                       <button type="button" class="premium-card__add-btn" (click)="addToCart(item); $event.stopPropagation()">
                         <i class="bi bi-plus"></i>
@@ -152,7 +155,9 @@ interface CartItem {
               ar
               ar-modes="webxr scene-viewer quick-look"
               auto-rotate
-              camera-controls>
+              auto-rotate-delay="0"
+              camera-controls
+              camera-orbit="0deg 0deg 105%">
             </model-viewer>
             <img *ngIf="(!selectedItem.showAr || !selectedItem.modelUrl) && selectedItem.imageUrl" [src]="getFullUrl(selectedItem.imageUrl)" [alt]="getDisplayName(selectedItem)">
           </div>
@@ -237,7 +242,40 @@ interface CartItem {
           </div>
         </div>
       </div>
+
+      <!-- Custom Notification -->
+      <div class="notification-toast" *ngIf="notification.message" [class.notification-toast--error]="notification.type === 'error'">
+        <i class="bi" [class.bi-check-circle]="notification.type === 'success'" [class.bi-exclamation-circle]="notification.type === 'error'"></i>
+        {{ notification.message }}
+      </div>
+
+      <!-- Custom Prompt Modal (Table Selection) -->
+      <div class="modal-overlay" *ngIf="isTableModalOpen" (click)="closeTableModal()">
+        <div class="modal-card modal-card--small animate-slide-up" (click)="$event.stopPropagation()">
+          <div class="modal-card__body p-4 text-center">
+            <div class="section-tag mb-2">{{ t('tableLabel') }}</div>
+            <h3 class="mb-3">{{ t('enterTableNumber') || 'მიუთითეთ მაგიდის ნომერი' }}</h3>
+            <input 
+              type="text" 
+              [(ngModel)]="tempTableLabel" 
+              [placeholder]="t('tablePlaceholder')" 
+              class="form-control form-control-lg rounded-3 mb-3 text-center border-primary shadow-sm"
+              #tableInput>
+            <div class="d-flex gap-2">
+              <button class="btn btn-light rounded-pill flex-grow-1" (click)="closeTableModal()">{{ t('back') }}</button>
+              <button class="btn btn-primary rounded-pill flex-grow-1" (click)="confirmTable()" [disabled]="!tempTableLabel.trim()">
+                {{ t('confirm') || 'დადასტურება' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Footer -->
+      <footer class="app-footer">
+        <p>Powered by growfy</p>
+      </footer>
     </div>
+
   `,
   styles: [`
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
@@ -249,6 +287,20 @@ interface CartItem {
       background: white;
       color: #0f172a;
       font-family: 'Outfit', sans-serif;
+    }
+
+    .app-footer {
+      text-align: center;
+      padding: 3rem 1rem 6rem 1rem; /* Extra bottom padding for FAB clearance */
+      color: #0d6efd; /* Blue color */
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .app-footer p {
+      margin: 0;
+      opacity: 0.8;
     }
 
     /* Hero & Header */
@@ -695,6 +747,38 @@ interface CartItem {
       position: relative;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     }
+    
+    .modal-card--small {
+      max-width: 350px;
+    }
+
+    .notification-toast {
+      position: fixed;
+      top: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #10b981;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 99px;
+      z-index: 11000;
+      box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 600;
+      animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .notification-toast--error {
+      background: #ef4444;
+      box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+    }
+    
+    @keyframes toastIn {
+      from { transform: translate(-50%, -20px); opacity: 0; }
+      to { transform: translate(-50%, 0); opacity: 1; }
+    }
 
     .modal-card__media {
       height: 300px;
@@ -937,6 +1021,11 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   orderSuccess = '';
   apiUrl = environment.baseUrl;
 
+  notification = { message: '', type: 'success' as 'success' | 'error' | null };
+  isTableModalOpen = false;
+  tempTableLabel = '';
+  private tableModalAction: 'waiter' | 'bill' | null = null;
+
   @ViewChild('itemModelViewer') itemModelViewer!: ElementRef;
   orderForm = {
     customerName: '',
@@ -974,7 +1063,10 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       rateUs: 'მოგვეცით შეფასება',
       leaveReview: 'დატოვეთ შეფასება',
       leaveTripAdvisorReview: 'შეაფასეთ TripAdvisor-ზე',
-      viewIn3D: '3D-ში ნახვა'
+      viewIn3D: '3D-ში ნახვა',
+      waiterCalledSuccess: 'მიმტანი გამოძახებულია!',
+      enterTableNumber: 'მიუთითეთ მაგიდის ნომერი',
+      confirm: 'დადასტურება'
     },
     en: {
       chooseLanguage: 'Choose your language',
@@ -1004,7 +1096,10 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       rateUs: 'Rate Us',
       leaveReview: 'Leave a Review',
       leaveTripAdvisorReview: 'Review on TripAdvisor',
-      viewIn3D: 'View in 3D'
+      viewIn3D: 'View in 3D',
+      waiterCalledSuccess: 'Waiter called!',
+      enterTableNumber: 'Enter Table Number',
+      confirm: 'Confirm'
     },
     ru: {
       chooseLanguage: 'Выберите язык',
@@ -1034,7 +1129,10 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       rateUs: 'Оцените нас',
       leaveReview: 'Оставить отзыв',
       leaveTripAdvisorReview: 'Отзыв на TripAdvisor',
-      viewIn3D: 'Посмотреть в 3D'
+      viewIn3D: 'Посмотреть в 3D',
+      waiterCalledSuccess: 'Официант вызван!',
+      enterTableNumber: 'Укажите номер стола',
+      confirm: 'Подтвердить'
     },
   };
 
@@ -1067,7 +1165,13 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       // Fetch all items for all menus immediately to support single-page scroll
       this.menus.forEach(menu => {
         this.api.get(`/public/menus/${menu.id}/items`).subscribe(itemRes => {
-          menu.items = itemRes.resultData;
+          this.items = itemRes.resultData || [];
+          menu.items = [...this.items].sort((a: any, b: any) => {
+            // Prioritize items with images
+            if (a.imageUrl && !b.imageUrl) return -1;
+            if (!a.imageUrl && b.imageUrl) return 1;
+            return a.sortOrder - b.sortOrder;
+          });
         });
       });
     });
@@ -1223,13 +1327,16 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   callWaiter() {
-    if (!this.object?.id) return;
+    console.log('callWaiter triggered');
+    if (!this.object) {
+      console.error('Object not loaded');
+      return;
+    }
 
-    const tableLabel = this.orderForm.tableLabel.trim();
-    if (!tableLabel) {
-      const label = prompt(this.t('tableLabel'));
-      if (!label || !label.trim()) return;
-      this.orderForm.tableLabel = label.trim();
+    if (!this.orderForm.tableLabel || !this.orderForm.tableLabel.trim()) {
+      console.log('Opening table modal for waiter');
+      this.openTableModal('waiter');
+      return;
     }
 
     this.isCallingWaiter = true;
@@ -1238,11 +1345,12 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     }).subscribe({
       next: () => {
         this.isCallingWaiter = false;
-        alert(this.t('waiterCalledSuccess') || 'Waiter called!');
+        this.showNotification(this.t('waiterCalledSuccess') || 'მიმტანი გამოძახებულია!');
       },
       error: (err) => {
         this.isCallingWaiter = false;
-        alert('Error: ' + (err.message || 'Check connection'));
+        console.error('Waiter call failed', err);
+        this.showNotification(err.message || 'Error', 'error');
       }
     });
   }
@@ -1267,14 +1375,16 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   requestBill() {
-    if (!this.object?.id) {
+    console.log('requestBill triggered');
+    if (!this.object) {
+      console.error('Object not loaded');
       return;
     }
 
-    if (!this.orderForm.tableLabel.trim()) {
-      const label = prompt(this.t('tableLabel'));
-      if (!label || !label.trim()) return;
-      this.orderForm.tableLabel = label.trim();
+    if (!this.orderForm.tableLabel || !this.orderForm.tableLabel.trim()) {
+      console.log('Opening table modal for bill');
+      this.openTableModal('bill');
+      return;
     }
 
     this.isRequestingBill = true;
@@ -1286,14 +1396,44 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
         const msg = this.selectedLanguage === 'ka' ? 'ანგარიში მოთხოვილია!' :
           this.selectedLanguage === 'ru' ? 'Счет запрошен!' :
             'Bill requested!';
-        alert(msg);
+        this.showNotification(msg);
       },
       error: (err) => {
         this.isRequestingBill = false;
-        alert('Error requesting bill: ' + (err.message || JSON.stringify(err)));
-        console.error('Bill Request Error:', err);
+        console.error('Bill request failed', err);
+        this.showNotification(err.message || 'Error', 'error');
       }
     });
+  }
+
+  showNotification(message: string, type: 'success' | 'error' = 'success') {
+    this.notification = { message, type };
+    setTimeout(() => {
+      this.notification = { message: '', type: null };
+    }, 3000);
+  }
+
+  openTableModal(action: 'waiter' | 'bill') {
+    this.tableModalAction = action;
+    this.tempTableLabel = '';
+    this.isTableModalOpen = true;
+    document.body.style.overflow = 'hidden';
+  }
+
+  closeTableModal() {
+    this.isTableModalOpen = false;
+    this.tableModalAction = null;
+    document.body.style.overflow = '';
+  }
+
+  confirmTable() {
+    if (this.tempTableLabel.trim()) {
+      this.orderForm.tableLabel = this.tempTableLabel.trim();
+      const action = this.tableModalAction;
+      this.closeTableModal();
+      if (action === 'waiter') this.callWaiter();
+      if (action === 'bill') this.requestBill();
+    }
   }
 
   submitOrder() {
@@ -1347,11 +1487,18 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const query = this.searchQuery.toLowerCase().trim();
     return this.menus.map(menu => {
-      const filteredItems = menu.items.filter((item: any) => {
-        const name = this.getDisplayName(item).toLowerCase();
-        const desc = this.getDisplayDescription(item).toLowerCase();
-        return name.includes(query) || desc.includes(query);
-      });
+      const menuName = this.getDisplayName(menu).toLowerCase();
+      const isMenuMatch = menuName.includes(query);
+
+      // If category matches, show all its items. Otherwise, filter items.
+      const filteredItems = isMenuMatch
+        ? menu.items
+        : menu.items.filter((item: any) => {
+          const name = this.getDisplayName(item).toLowerCase();
+          const desc = this.getDisplayDescription(item).toLowerCase();
+          return name.includes(query) || desc.includes(query);
+        });
+
       return { ...menu, items: filteredItems };
     }).filter(menu => menu.items.length > 0);
   }
