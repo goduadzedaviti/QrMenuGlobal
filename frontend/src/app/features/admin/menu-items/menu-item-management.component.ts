@@ -173,7 +173,11 @@ import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-
                       <label class="form-label fw-bold small text-uppercase text-muted">{{ translate('MENU_ITEM_PRICE_LABEL') }} (₾)</label>
                       <div class="input-group">
                         <span class="input-group-text rounded-start-3 border-2 bg-light border-end-0">₾</span>
-                        <input type="number" [(ngModel)]="editingItem.price" class="form-control rounded-end-3 border-2 border-start-0 py-2">
+                        <input type="number" 
+                               [(ngModel)]="editingItem.price" 
+                               (focus)="onPriceFocus($event)"
+                               (blur)="onPriceBlur()"
+                               class="form-control rounded-end-3 border-2 border-start-0 py-2">
                       </div>
                     </div>
                     <div class="col-6 mb-4 d-flex align-items-end">
@@ -193,7 +197,7 @@ import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-
                 <div class="col-md-4 mt-3 mt-md-0 border-start ps-md-4">
                   <label class="form-label fw-bold small text-uppercase text-muted d-block">{{ translate('VENUE_PHOTO_LABEL') }}</label>
                   
-                  <div class="image-upload-container text-center p-3 border-2 border-dashed rounded-4 bg-light mb-3" 
+                  <div class="image-upload-container text-start p-3 border-2 border-dashed rounded-4 bg-light mb-3" 
                        style="border-style: dashed !important; border-color: #dee2e6 !important;">
                     <div *ngIf="!editingItem.imageUrl && !isUploading" (click)="fileInput.click()" style="cursor: pointer;">
                       <i class="bi bi-cloud-arrow-up display-4 text-muted"></i>
@@ -205,14 +209,14 @@ import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-
                       <p class="small text-muted mt-2">Uploading...</p>
                     </div>
 
-                    <div *ngIf="editingItem.imageUrl && !isUploading" class="position-relative group">
-                      <img [src]="getFullUrl(editingItem.imageUrl)" class="img-fluid rounded-3 shadow-sm mb-2 max-h-200">
-                      <div class="mt-2 d-flex justify-content-center gap-2">
+                    <div *ngIf="editingItem.imageUrl && !isUploading" class="position-relative group d-inline-block text-start">
+                      <img [src]="getFullUrl(editingItem.imageUrl)" class="img-fluid rounded-3 shadow-sm mb-2 max-h-200 d-block">
+                      <div class="mt-2 d-flex justify-content-between align-items-center">
                          <button class="btn btn-sm btn-outline-primary rounded-pill px-3" (click)="fileInput.click()">
                            <i class="bi bi-arrow-repeat me-1"></i> {{ translate('BUTTON_EDIT') }}
                          </button>
-                         <button class="btn btn-sm btn-outline-danger rounded-pill px-3" (click)="editingItem.imageUrl = null">
-                           <i class="bi bi-trash"></i> Remove
+                         <button class="btn btn-sm btn-outline-danger rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" (click)="editingItem.imageUrl = null" title="Remove Image">
+                           <i class="bi bi-trash m-0"></i>
                          </button>
                       </div>
                     </div>
@@ -225,7 +229,7 @@ import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-
                   </div>
 
                   <label class="form-label fw-bold small text-uppercase text-muted d-block mt-4">3D Model (GLTF/GLB)</label>
-                  <div class="model-upload-container text-center p-3 border-2 border-dashed rounded-4 bg-light mb-0" 
+                  <div class="model-upload-container text-start p-3 border-2 border-dashed rounded-4 bg-light mb-0" 
                        style="border-style: dashed !important; border-color: #dee2e6 !important;">
                     <div *ngIf="!editingItem.modelUrl && !isUploadingModel" (click)="modelInput.click()" style="cursor: pointer;">
                       <i class="bi bi-box display-4 text-muted"></i>
@@ -237,17 +241,17 @@ import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-
                       <p class="small text-muted mt-2">Uploading Model...</p>
                     </div>
 
-                    <div *ngIf="editingItem.modelUrl && !isUploadingModel" class="position-relative p-2">
-                      <div class="bg-white rounded-3 shadow-sm p-3 mb-2 d-flex align-items-center justify-content-center">
+                    <div *ngIf="editingItem.modelUrl && !isUploadingModel" class="position-relative p-2 d-inline-block text-start">
+                      <div class="bg-white rounded-3 shadow-sm p-3 mb-2 d-flex align-items-center justify-content-center w-100">
                          <i class="bi bi-file-earmark-check fs-1 text-success me-2"></i>
                          <span class="text-dark small fw-bold">Model uploaded</span>
                       </div>
-                      <div class="mt-2 d-flex justify-content-center gap-2">
+                      <div class="mt-2 d-flex justify-content-between align-items-center">
                          <button class="btn btn-sm btn-outline-primary rounded-pill px-3" (click)="modelInput.click()">
                            <i class="bi bi-arrow-repeat me-1"></i> {{ translate('BUTTON_EDIT') }}
                          </button>
-                         <button class="btn btn-sm btn-outline-danger rounded-pill px-3" (click)="editingItem.modelUrl = null">
-                           <i class="bi bi-trash"></i> Remove
+                         <button class="btn btn-sm btn-outline-danger rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" (click)="editingItem.modelUrl = null" title="Remove Model">
+                           <i class="bi bi-trash m-0"></i>
                          </button>
                       </div>
                     </div>
@@ -501,7 +505,8 @@ export class MenuItemManagementComponent implements OnInit {
           error: (err) => {
             console.error('Upload error', err);
             this.isUploading = false;
-            alert('Upload failed: ' + (err.message || 'Server error'));
+            const errorMsg = err.error?.message || err.error || err.message || 'Server error';
+            alert('Upload failed: ' + errorMsg);
           }
         });
       } catch (err: any) {
@@ -530,7 +535,8 @@ export class MenuItemManagementComponent implements OnInit {
           error: (err) => {
             console.error('Model upload error', err);
             this.isUploadingModel = false;
-            alert('Model upload failed: ' + (err.message || 'Server error'));
+            const errorMsg = err.error?.message || err.error || err.message || 'Server error';
+            alert('Model upload failed: ' + errorMsg);
           }
         });
       } catch (err: any) {
@@ -588,6 +594,20 @@ export class MenuItemManagementComponent implements OnInit {
 
   goBackToMenus() {
     this.location.back();
+  }
+
+  onPriceFocus(event: any) {
+    if (this.editingItem.price === 0) {
+      this.editingItem.price = undefined;
+    } else {
+      event.target.select();
+    }
+  }
+
+  onPriceBlur() {
+    if (this.editingItem.price === null || this.editingItem.price === undefined) {
+      this.editingItem.price = 0;
+    }
   }
 
   closeModal() { this.isModalOpen = false; }

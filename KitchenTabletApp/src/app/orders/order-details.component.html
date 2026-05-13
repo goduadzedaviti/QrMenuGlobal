@@ -16,12 +16,13 @@
     <section class="items-list">
       @for (item of entry.items; track item.id) {
       <article class="item-row">
-        <div>
-          <h2>{{ item.quantity }} x {{ item.nameSnapshot }}</h2>
-          @if (item.notes) {
-          <p>{{ item.notes }}</p>
-          }
+        <div class="item-content">
+          <span class="item-qty">{{ item.quantity }}x</span>
+          <span class="item-name">{{ item.nameSnapshot }}</span>
         </div>
+        @if (item.notes) {
+          <p class="item-notes">{{ item.notes }}</p>
+        }
       </article>
       }
     </section>

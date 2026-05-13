@@ -32,7 +32,12 @@ builder.Logging.AddDebug();
 // Configure Kestrel limits
 builder.Services.Configure<KestrelServerOptions>(options =>
 {
-    options.Limits.MaxRequestBodySize = 30000000; // 30MB
+    options.Limits.MaxRequestBodySize = 100000000; // 100MB
+});
+
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 100000000; // 100MB
 });
 
 // Add services to the container.
@@ -211,7 +216,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         await context.Database.MigrateAsync();
-        await DatabaseSeeder.SeedAsync(context, includeSampleData: false);
+        await DatabaseSeeder.SeedAsync(context, includeSampleData: true);
         await KitchenSchemaBootstrapper.EnsureAsync(context);
     }
     catch (Exception ex)

@@ -42,6 +42,8 @@ menu-frontend/dist/
 Thumbs.db
 artifacts/
 publish/
+publish_output/
+*.zip
 deploy.zip
 
 # Upload paths inside wwwroot
@@ -55,4 +57,10 @@ serve_spa.py
 .env
 .env.*
 ! .env.example
-appsettings.Development.json
+appsettings.json
+appsettings.*.json
+
+## [Binaries]
+*.dll
+*.pdb
+*.exe
