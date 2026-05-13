@@ -1024,7 +1024,7 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   notification = { message: '', type: 'success' as 'success' | 'error' | null };
   isTableModalOpen = false;
   tempTableLabel = '';
-  private tableModalAction: 'waiter' | 'bill' | null = null;
+  private tableModalAction: 'waiter' | 'bill' | 'order' | null = null;
 
   @ViewChild('itemModelViewer') itemModelViewer!: ElementRef;
   orderForm = {
@@ -1413,7 +1413,7 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     }, 3000);
   }
 
-  openTableModal(action: 'waiter' | 'bill') {
+  openTableModal(action: 'waiter' | 'bill' | 'order') {
     this.tableModalAction = action;
     this.tempTableLabel = '';
     this.isTableModalOpen = true;
@@ -1433,6 +1433,7 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       this.closeTableModal();
       if (action === 'waiter') this.callWaiter();
       if (action === 'bill') this.requestBill();
+      if (action === 'order') this.submitOrder();
     }
   }
 
@@ -1442,13 +1443,11 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     if (!this.orderForm.tableLabel.trim()) {
-      this.orderError = 'Table is required.';
+      this.openTableModal('order');
       return;
     }
 
     this.isSubmittingOrder = true;
-    this.orderError = '';
-    this.orderSuccess = '';
 
     this.api.post(`/public/objects/${this.object.id}/orders`, {
       customerName: this.orderForm.customerName,
@@ -1462,18 +1461,18 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
     }).subscribe({
       next: () => {
         this.isSubmittingOrder = false;
-        this.orderSuccess = this.t('orderPlaced');
+        this.showNotification(this.t('orderPlaced') || 'შეკვეთა გაგზავნილია!');
         this.cart = [];
         this.orderForm = { customerName: '', tableLabel: '', notes: '' };
 
         setTimeout(() => {
           this.closeCart();
-          this.orderSuccess = '';
         }, 2000);
       },
       error: (error) => {
         this.isSubmittingOrder = false;
-        this.orderError = error?.error?.errors?.[0] || 'Order submission failed.';
+        const errorMsg = error?.error?.errors?.[0] || error?.message || 'Order submission failed.';
+        this.showNotification(errorMsg, 'error');
       }
     });
   }

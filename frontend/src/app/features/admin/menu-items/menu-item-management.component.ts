@@ -505,7 +505,8 @@ export class MenuItemManagementComponent implements OnInit {
           error: (err) => {
             console.error('Upload error', err);
             this.isUploading = false;
-            alert('Upload failed: ' + (err.message || 'Server error'));
+            const errorMsg = err.error?.message || err.error || err.message || 'Server error';
+            alert('Upload failed: ' + errorMsg);
           }
         });
       } catch (err: any) {
@@ -534,7 +535,8 @@ export class MenuItemManagementComponent implements OnInit {
           error: (err) => {
             console.error('Model upload error', err);
             this.isUploadingModel = false;
-            alert('Model upload failed: ' + (err.message || 'Server error'));
+            const errorMsg = err.error?.message || err.error || err.message || 'Server error';
+            alert('Model upload failed: ' + errorMsg);
           }
         });
       } catch (err: any) {

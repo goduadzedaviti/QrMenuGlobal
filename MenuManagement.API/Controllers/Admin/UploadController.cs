@@ -47,7 +47,7 @@ namespace MenuManagement.API.Controllers.Admin
         }
         
         [HttpPost("model")]
-        [RequestSizeLimit(50000000)] // 50MB for 3D models
+        [RequestSizeLimit(100000000)] // 100MB for 3D models
         public async Task<IActionResult> UploadModel(IFormFile file)
         {
             Console.WriteLine($"[Upload Model] Start: {(file == null ? "NULL" : file.FileName)} size={file?.Length}");

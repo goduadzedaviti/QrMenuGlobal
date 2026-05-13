@@ -1,5 +1,5 @@
 export const appConfig = {
-  apiBaseUrl: 'http://localhost:5223/api',
-  hubUrl: 'http://localhost:5223/hubs/kitchen',
+  apiBaseUrl: 'https://growfy-001-site1.rtempurl.com/api',
+  hubUrl: 'https://growfy-001-site1.rtempurl.com/hubs/kitchen',
   defaultRestaurantId: null
 };
