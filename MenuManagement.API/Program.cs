@@ -35,9 +35,16 @@ builder.Services.Configure<KestrelServerOptions>(options =>
     options.Limits.MaxRequestBodySize = 100000000; // 100MB
 });
 
+builder.Services.Configure<IISServerOptions>(options =>
+{
+    options.MaxRequestBodySize = 100000000; // 100MB
+});
+
 builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
 {
     options.MultipartBodyLengthLimit = 100000000; // 100MB
+    options.ValueLengthLimit = 100000000;
+    options.MultipartHeadersLengthLimit = 100000000;
 });
 
 // Add services to the container.

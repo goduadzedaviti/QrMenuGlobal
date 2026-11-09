@@ -142,6 +142,28 @@ interface CartItem {
         </ng-template>
       </main>
 
+      <!-- Review Links -->
+      <div class="review-section" *ngIf="object?.googleReviewUrl || object?.tripAdvisorUrl">
+        <h3 class="review-title">{{ t('leaveReview') }}</h3>
+        <div class="review-buttons">
+          <a *ngIf="object?.googleReviewUrl" [href]="object.googleReviewUrl" target="_blank" class="review-btn review-btn--google">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22px" height="22px">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.2-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            </svg>
+            <span>{{ t('leaveGoogleReview') || 'Google Review' }}</span>
+          </a>
+          <a *ngIf="object?.tripAdvisorUrl" [href]="object.tripAdvisorUrl" target="_blank" class="review-btn review-btn--tripadvisor">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="22px" height="22px">
+              <path fill="#00aa6c" d="M256 0c-141.4 0-256 114.6-256 256s114.6 256 256 256 256-114.6 256-256S397.4 0 256 0zm0 435.3c-99 0-179.3-80.3-179.3-179.3S157 76.7 256 76.7 435.3 157 435.3 256 355 435.3 256 435.3zm-104.9-195c-20.9 0-38 17.1-38 38s17.1 38 38 38 38-17.1 38-38-17.1-38-38-38zm209.8 0c-20.9 0-38 17.1-38 38s17.1 38 38 38 38-17.1 38-38-17.1-38-38-38zm0-62.8c-42.5 0-78.5 28.5-90.9 67.5-3.3-.4-6.6-.8-10-.8-4.9 0-9.8.5-14.6 1.1-12-38.6-47.5-66.8-89.4-66.8-51.9 0-94 42.1-94 94s42.1 94 94 94c34.7 0 65-18.9 81.3-46.8 6.6 2.4 13.6 3.8 20.8 3.8 6 0 11.9-1 17.5-2.9 16.5 27.5 46.5 45.9 80.9 45.9 51.9 0 94-42.1 94-94s-42.1-94-94-94zM151.1 328.7c-32.2 0-58.4-26.2-58.4-58.4s26.2-58.4 58.4-58.4 58.4 26.2 58.4 58.4-26.2 58.4-58.4 58.4zm209.8 0c-32.2 0-58.4-26.2-58.4-58.4s26.2-58.4 58.4-58.4 58.4 26.2 58.4 58.4-26.2 58.4-58.4 58.4zm-141.7-65.7c2.8 19.3 11.5 36.6 24.3 50.4l-25.1 35.8-30.8-40.8c21-12 34.6-28.8 31.6-45.4z"/>
+            </svg>
+            <span>{{ t('leaveTripAdvisorReview') || 'TripAdvisor Review' }}</span>
+          </a>
+        </div>
+      </div>
+
       <!-- Portals & Modals same as before -->
       <div class="modal-overlay" *ngIf="selectedItem" (click)="closeItemDetails()">
         <div class="modal-card" (click)="$event.stopPropagation()">
@@ -301,6 +323,97 @@ interface CartItem {
     .app-footer p {
       margin: 0;
       opacity: 0.8;
+    }
+
+    /* Reviews Section */
+    .review-section {
+      padding: 2rem 1.5rem;
+      text-align: center;
+      background: #f8fafc;
+      margin: 1rem auto 3rem;
+      border-radius: 16px;
+      max-width: 600px;
+    }
+
+    @media (min-width: 768px) {
+      .review-section { max-width: 800px; margin: 1rem auto 3rem; }
+    }
+    @media (min-width: 1200px) {
+      .review-section { max-width: 1100px; }
+    }
+
+    .review-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 1.25rem;
+    }
+
+    .review-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    @media (min-width: 480px) {
+      .review-buttons { flex-direction: row; justify-content: center; }
+    }
+
+    .review-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.85rem 1.25rem;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+      width: 100%;
+      max-width: 250px;
+    }
+
+    .review-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .review-btn--google {
+      background: #ffffff;
+      color: #3c4043;
+      border: 1px solid #dadce0;
+      box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+      font-weight: 600;
+    }
+
+    .review-btn--google:hover {
+      background: #f8f9fa;
+      box-shadow: 0 1px 3px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15);
+      transform: translateY(-2px);
+    }
+
+    .review-btn--google svg {
+      margin-right: 2px;
+    }
+
+    .review-btn--tripadvisor {
+      background: #ffffff;
+      color: #3c4043;
+      border: 1px solid #dadce0;
+      box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+      font-weight: 600;
+    }
+
+    .review-btn--tripadvisor:hover {
+      background: #f8f9fa;
+      box-shadow: 0 1px 3px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15);
+      transform: translateY(-2px);
+    }
+
+    .review-btn--tripadvisor svg {
+      margin-right: 4px;
     }
 
     /* Hero & Header */
@@ -1062,6 +1175,7 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       requestBill: 'ანგარიში',
       rateUs: 'მოგვეცით შეფასება',
       leaveReview: 'დატოვეთ შეფასება',
+      leaveGoogleReview: 'შეაფასეთ Google-ზე',
       leaveTripAdvisorReview: 'შეაფასეთ TripAdvisor-ზე',
       viewIn3D: '3D-ში ნახვა',
       waiterCalledSuccess: 'მიმტანი გამოძახებულია!',
@@ -1095,6 +1209,7 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       requestBill: 'Request Bill',
       rateUs: 'Rate Us',
       leaveReview: 'Leave a Review',
+      leaveGoogleReview: 'Review on Google',
       leaveTripAdvisorReview: 'Review on TripAdvisor',
       viewIn3D: 'View in 3D',
       waiterCalledSuccess: 'Waiter called!',
@@ -1128,6 +1243,7 @@ export class ObjectDetailComponent implements OnInit, AfterViewInit, OnDestroy {
       requestBill: 'Заказать счет',
       rateUs: 'Оцените нас',
       leaveReview: 'Оставить отзыв',
+      leaveGoogleReview: 'Отзыв на Google',
       leaveTripAdvisorReview: 'Отзыв на TripAdvisor',
       viewIn3D: 'Посмотреть в 3D',
       waiterCalledSuccess: 'Официант вызван!',

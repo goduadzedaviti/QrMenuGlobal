@@ -43,6 +43,7 @@ Thumbs.db
 artifacts/
 publish/
 publish_output/
+publish_output_smarterasp/
 *.zip
 deploy.zip
 

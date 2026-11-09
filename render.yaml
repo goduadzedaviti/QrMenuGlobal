@@ -1,8 +1,9 @@
 services:
-  # Backend API
+  # Backend API (.NET 8 Docker Web Service)
   - type: web
     name: qrmenu-backend-api
     runtime: docker
+    plan: starter # Note: Change to free if deploying without persistent disk (Render disks require Starter plan)
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -23,17 +24,21 @@ services:
       mountPath: /app/wwwroot/uploads
       sizeGB: 1
 
-  # Frontend (Admin + Public)
+  # Frontend (Angular Static Site)
   - type: web
     name: qrmenu-management-frontend
     env: static
-    buildCommand: "cd frontend && npm ci && npm run build"
+    buildCommand: "cd frontend && npm ci && npm run build:render"
     staticPublishPath: "frontend/dist/frontend/browser"
     routes:
       - type: rewrite
         source: /*
         destination: /index.html
+    envVars:
+      - key: BACKEND_URL
+        value: https://qrmenuglobal-q32y.onrender.com
 
 databases:
+  # PostgreSQL Database
   - name: qrmenu-backend-db
     plan: free
