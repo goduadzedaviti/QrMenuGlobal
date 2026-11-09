@@ -203,11 +203,6 @@ app.UseAuthorization();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
-app.MapGet("/", context => {
-    context.Response.Redirect("/swagger");
-    return Task.CompletedTask;
-});
-
 app.MapControllers();
 app.MapHub<KitchenHub>("/hubs/kitchen");
 app.MapFallbackToFile("index.html");
